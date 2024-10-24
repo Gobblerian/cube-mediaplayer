@@ -1,173 +1,334 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cube Media Player with Spotify</title>
-  <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cube Media Player</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #333;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .player-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #222;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .track-list {
+            width: 100%;
+            margin-bottom: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .track {
+            background-color: #444;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .track h4 {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .track button {
+            background-color: #ffb554;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .track button:hover {
+            background-color: #eaa53f;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .controls button {
+            font-size: 36px;
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .controls button:hover {
+            color: #ffb554;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .volume-slider {
+            flex-grow: 1;
+            background-color: #555;
+            height: 5px;
+            border-radius: 5px;
+        }
+
+        .volume-slider input {
+            width: 100%;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: #555;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #ffb554;
+            border-radius: 5px;
+        }
+
+        .track-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        .timestamp {
+            color: #ccc;
+        }
+
+        button.upload {
+            background-color: #ffb554;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        button.upload:hover {
+            background-color: #eaa53f;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+    </style>
 </head>
 <body>
 
-  <h1>Cube Media Player with Spotify</h1>
+<div class="player-container">
+    <h1>Cube Media Player</h1>
 
-  <!-- Button to log in with Spotify -->
-  <button id="loginButton">Login with Spotify</button>
+    <!-- Track List -->
+    <div class="track-list" id="trackList"></div>
 
-  <!-- Container for playlists -->
-  <div id="playlistsContainer">
-    <h2>Your Playlists</h2>
-    <ul id="playlists"></ul>
-  </div>
+    <!-- Upload Button -->
+    <button class="upload" onclick="document.getElementById('fileInput').click()">Upload Tracks</button>
+    <input type="file" id="fileInput" multiple accept="audio/*">
 
-  <!-- Audio player controls -->
-  <div id="playerControls">
-    <button id="playButton">Play</button>
-    <button id="pauseButton">Pause</button>
-  </div>
+    <!-- Player Controls -->
+    <div class="controls">
+        <button id="playPauseBtn">▶️</button>
+    </div>
 
-  <script>
-    // Spotify App Credentials
-    const clientId = '46a00692d37c4f1fb34bbb369c0bd7ac';
-    const clientSecret = '967a221d12924c158ab3938f372b08d5';
-    const redirectUri = 'https://gobblerian.github.io/cube-mediaplayer/';  // Replace with your actual redirect URI
+    <!-- Volume Control -->
+    <div class="volume-control">
+        <span>Volume:</span>
+        <div class="volume-slider">
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="1">
+        </div>
+    </div>
 
-    // Authorization URL for logging in to Spotify
-    const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user-read-playback-state%20user-modify-playback-state%20user-read-currently-playing%20playlist-read-private%20streaming`;
+    <!-- Progress Bar -->
+    <div class="progress-bar-container" id="progressBarContainer">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
 
-    // Helper function to extract query parameters from the URL
-    function getQueryParam(param) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(param);
-    }
+    <!-- Track Info -->
+    <div class="track-info">
+        <span id="currentTrack">No Track Playing</span>
+        <span class="timestamp"><span id="currentTime">00:00</span> / <span id="duration">00:00</span></span>
+    </div>
+</div>
 
-    // OAuth flow: Redirect user to login with Spotify
-    document.getElementById('loginButton').addEventListener('click', () => {
-      window.location.href = authUrl;
+<!-- Sound effect for transitions -->
+<audio id="whooshEffect" src="TransitionEffect.wav"></audio>
+
+<script>
+    const audioPlayer = new Audio();
+    const whooshEffect = document.getElementById('whooshEffect');
+    const trackList = document.getElementById('trackList');
+    const fileInput = document.getElementById('fileInput');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const progressBar = document.getElementById('progressBar');
+    const progressBarContainer = document.getElementById('progressBarContainer');
+    const currentTrackDisplay = document.getElementById('currentTrack');
+    const currentTimeDisplay = document.getElementById('currentTime');
+    const durationDisplay = document.getElementById('duration');
+    const volumeSlider = document.getElementById('volumeSlider');
+
+    let tracks = [];
+    let currentTrackIndex = null;
+    let isPlaying = false;
+
+    // Upload and add tracks
+    fileInput.addEventListener('change', () => {
+        const files = fileInput.files;
+        addTracks(files);
     });
 
-    // Check if the URL contains a code (after login)
-    const code = getQueryParam('code');
-    if (code) {
-      // Exchange the code for an access token
-      fetch('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': 'Basic ' + btoa(clientId + ':' + clientSecret)
-        },
-        body: `grant_type=authorization_code&code=${code}&redirect_uri=${encodeURIComponent(redirectUri)}`
-      })
-        .then(response => response.json())
-        .then(data => {
-          const accessToken = data.access_token;
-          initializeSpotifyPlayer(accessToken);
-          fetchPlaylists(accessToken);
-        })
-        .catch(error => console.error('Error fetching access token:', error));
+    function addTracks(files) {
+        for (let file of files) {
+            const url = URL.createObjectURL(file);
+            const name = file.name;
+            const track = { name, url };
+            tracks.push(track);
+        }
+        updateTrackList();
     }
 
-    // Initialize the Spotify Web Playback SDK
-    function initializeSpotifyPlayer(token) {
-      window.onSpotifyWebPlaybackSDKReady = () => {
-        const player = new Spotify.Player({
-          name: 'Cube Media Player',
-          getOAuthToken: cb => { cb(token); },
-          volume: 0.5
-        });
+    function updateTrackList() {
+        trackList.innerHTML = '';
+        tracks.forEach((track, index) => {
+            const trackElement = document.createElement('div');
+            trackElement.classList.add('track');
 
-        // Error handling
-        player.addListener('initialization_error', ({ message }) => { console.error(message); });
-        player.addListener('authentication_error', ({ message }) => { console.error(message); });
-        player.addListener('account_error', ({ message }) => { console.error(message); });
-        player.addListener('playback_error', ({ message }) => { console.error(message); });
+            const trackInfo = document.createElement('h4');
+            trackInfo.textContent = track.name;
 
-        // Playback status updates
-        player.addListener('player_state_changed', state => { console.log(state); });
-
-        // Ready
-        player.addListener('ready', ({ device_id }) => {
-          console.log('Ready with Device ID', device_id);
-          transferPlaybackHere(device_id, token);
-
-          // Play and pause buttons
-          document.getElementById('playButton').addEventListener('click', () => {
-            fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
-              method: 'PUT',
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
+            const playButton = document.createElement('button');
+            playButton.textContent = 'Play';
+            playButton.addEventListener('click', () => {
+                playTrackWithTransition(index);
             });
-          });
 
-          document.getElementById('pauseButton').addEventListener('click', () => {
-            fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${device_id}`, {
-              method: 'PUT',
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            });
-          });
+            trackElement.appendChild(trackInfo);
+            trackElement.appendChild(playButton);
+            trackList.appendChild(trackElement);
         });
-
-        // Connect to the player
-        player.connect();
-      };
     }
 
-    // Transfer playback to the web player
-    function transferPlaybackHere(device_id, token) {
-      fetch('https://api.spotify.com/v1/me/player', {
-        method: 'PUT',
-        body: JSON.stringify({
-          "device_ids": [device_id],
-          "play": true,
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-      });
+    function playTrackWithTransition(index) {
+        if (currentTrackIndex !== null) {
+            fadeOut(() => playTrack(index));
+        } else {
+            playTrack(index);
+        }
+        whooshEffect.currentTime = 0;
+        whooshEffect.play();
     }
 
-    // Fetch the user's playlists
-    function fetchPlaylists(token) {
-      fetch('https://api.spotify.com/v1/me/playlists', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      })
-        .then(response => response.json())
-        .then(data => {
-          const playlists = data.items;
-          const playlistsContainer = document.getElementById('playlists');
-          playlistsContainer.innerHTML = '';
-
-          // Display playlists and set up click event to play them
-          playlists.forEach(playlist => {
-            const listItem = document.createElement('li');
-            listItem.textContent = playlist.name;
-            listItem.addEventListener('click', () => playPlaylist(playlist.id, token));
-            playlistsContainer.appendChild(listItem);
-          });
-        })
-        .catch(error => console.error('Error fetching playlists:', error));
+    function playTrack(index) {
+        currentTrackIndex = index;
+        const track = tracks[currentTrackIndex];
+        audioPlayer.src = track.url;
+        audioPlayer.play();
+        isPlaying = true;
+        currentTrackDisplay.textContent = track.name;
+        playPauseBtn.textContent = '⏸️';
+        updateProgressBar();
+        updateDuration();
+        audioPlayer.onended = () => {
+            isPlaying = false;
+            currentTrackIndex = null;
+            currentTrackDisplay.textContent = "No Track Playing";
+            playPauseBtn.textContent = '▶️';
+        };
     }
 
-    // Play a selected playlist
-    function playPlaylist(playlistId, token) {
-      fetch(`https://api.spotify.com/v1/me/player/play`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          context_uri: `spotify:playlist:${playlistId}`
-        })
-      })
-      .catch(error => console.error('Error playing playlist:', error));
+    function fadeOut(callback) {
+        const fadeInterval = setInterval(() => {
+            if (audioPlayer.volume > 0.1) {
+                audioPlayer.volume -= 0.1;
+            } else {
+                clearInterval(fadeInterval);
+                audioPlayer.pause();
+                audioPlayer.volume = volumeSlider.value; // Restore volume
+                if (callback) callback();
+            }
+        }, 100);
     }
-  </script>
+
+    function updateProgressBar() {
+        if (isPlaying) {
+            const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            progressBar.style.width = progress + '%';
+            currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
+            requestAnimationFrame(updateProgressBar);
+        }
+    }
+
+    function updateDuration() {
+        durationDisplay.textContent = formatTime(audioPlayer.duration);
+    }
+
+    playPauseBtn.addEventListener('click', () => {
+        if (isPlaying) {
+            audioPlayer.pause();
+            isPlaying = false;
+            playPauseBtn.textContent = '▶️';
+        } else {
+            if (currentTrackIndex !== null) {
+                audioPlayer.play();
+                isPlaying = true;
+                playPauseBtn.textContent = '⏸️';
+            }
+        }
+    });
+
+    volumeSlider.addEventListener('input', () => {
+        audioPlayer.volume = volumeSlider.value;
+    });
+
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
+        return `${minutes}:${secs}`;
+    }
+</script>
 
 </body>
 </html>
