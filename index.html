@@ -15,10 +15,17 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: center;
+            align-items: center;
         }
-        .container {
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: white;
             padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         h1 {
             font-size: 2rem;
@@ -134,33 +141,44 @@
 </head>
 <body>
 
-<div class="container">
-    <h1>Media Player</h1>
-
-    <!-- Drop zone for drag-and-drop functionality -->
-    <div id="dropZone" class="drop-zone">
-        Drag & Drop your audio files here or click to upload
-    </div>
-
-    <div class="track-list" id="trackList">
-        <!-- Dynamic track list will be added here -->
-    </div>
-
-    <input type="file" id="fileInput" multiple accept="audio/*" style="display:none;">
-    <button class="upload" onclick="document.getElementById('fileInput').click()">Upload Tracks</button>
+<!-- Login Section -->
+<div id="loginSection" class="login-container">
+    <h1>Login</h1>
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button id="loginButton">Login</button>
+    <div id="loginError" style="color: red; display: none;">Invalid credentials, please try again.</div>
 </div>
 
-<div class="player">
-    <div class="controls">
-        <button id="playPauseBtn" title="Play/Pause">▶️</button>
+<div id="playerSection" style="display: none;">
+    <div class="container">
+        <h1>Media Player</h1>
+
+        <!-- Drop zone for drag-and-drop functionality -->
+        <div id="dropZone" class="drop-zone">
+            Drag & Drop your audio files here or click to upload
+        </div>
+
+        <div class="track-list" id="trackList">
+            <!-- Dynamic track list will be added here -->
+        </div>
+
+        <input type="file" id="fileInput" multiple accept="audio/*" style="display:none;">
+        <button class="upload" onclick="document.getElementById('fileInput').click()">Upload Tracks</button>
     </div>
-    <div class="progress-bar" id="progressBar">
-        <div class="progress" id="progress"></div>
-    </div>
-    <div>
-        <span id="currentTrack">No Track Playing</span>
-        <span class="timestamp" id="currentTime">00:00</span> / 
-        <span class="timestamp" id="duration">00:00</span>
+
+    <div class="player">
+        <div class="controls">
+            <button id="playPauseBtn" title="Play/Pause">▶️</button>
+        </div>
+        <div class="progress-bar" id="progressBar">
+            <div class="progress" id="progress"></div>
+        </div>
+        <div>
+            <span id="currentTrack">No Track Playing</span>
+            <span class="timestamp" id="currentTime">00:00</span> / 
+            <span class="timestamp" id="duration">00:00</span>
+        </div>
     </div>
 </div>
 
@@ -181,17 +199,24 @@
     const dropZone = document.getElementById('dropZone');
 
     let tracks = [];
-    let playQueue = [];
     let currentTrackIndex = null;
     let isPlaying = false;
-    let fadeDuration = 250; // 1 second for fade effect
-    let whooshDuration = 500; // 1.5 second for whoosh effect
 
-    // Function to play the whoosh effect
-    function playWhoosh() {
-        whooshEffect.currentTime = 0; // Rewind to start
-        whooshEffect.play();
-    }
+    // Simple login system
+    const validUsername = "admin";
+    const validPassword = "password123";
+
+    document.getElementById('loginButton').addEventListener('click', function() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        if (username === validUsername && password === validPassword) {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('playerSection').style.display = 'block';
+        } else {
+            document.getElementById('loginError').style.display = 'block';
+        }
+    });
 
     // Add tracks to the playlist
     fileInput.addEventListener('change', () => {
@@ -207,7 +232,6 @@
             tracks.push(track);
         }
         updateTrackList();
-        playWhoosh(); // Play the sound effect when tracks are added
     }
 
     function updateTrackList() {
@@ -223,7 +247,6 @@
             playNextButton.textContent = 'Play Next';
             playNextButton.addEventListener('click', () => {
                 addToQueue(index);
-                playWhoosh(); // Play the sound effect when adding to queue
             });
 
             const removeButton = document.createElement('button');
@@ -248,105 +271,72 @@
             trackElement.appendChild(playNextButton);
             trackElement.appendChild(playFadeButton);
             trackElement.appendChild(playNormalButton);
-            trackElement.appendChild(removeButton);
             trackList.appendChild(trackElement);
         });
     }
 
-    // Add track to play queue
-    function addToQueue(index) {
-        playQueue.push(index);
-    }
-
-    // Remove track from the playlist
-    function removeTrack(index) {
-        tracks.splice(index, 1);
-        updateTrackList();
-    }
-
-    // Play track with whoosh and fade-in effect
     function playTrackWithTransition(index) {
-        const track = tracks[index];
-
-        if (isPlaying) {
-            fadeOut(() => {
-                startNewTrackWithWhoosh(track, index);
-            });
-        } else {
-            startNewTrackWithWhoosh(track, index);
+        if (currentTrackIndex !== null) {
+            fadeOut(); // Fade out the current track before fading in the new one
         }
+        playTrack(index);
+        playWhoosh(); // Play the whoosh effect only on fade play
     }
 
-    // Play track normally (without transition)
     function playTrackNormally(index) {
-        const track = tracks[index];
-        if (isPlaying) {
-            audioPlayer.pause();
-            isPlaying = false;
+        if (currentTrackIndex !== null) {
+            fadeOut(); // Fade out the current track
         }
-        startNewTrack(track, index);
+        playTrack(index);
     }
 
-    function startNewTrackWithWhoosh(track, index) {
+    function playTrack(index) {
+        currentTrackIndex = index;
+        const track = tracks[currentTrackIndex];
         audioPlayer.src = track.url;
         audioPlayer.play();
-        currentTrackIndex = index;
-        currentTrack.textContent = track.name;
         isPlaying = true;
-        playWhoosh(); // Play the sound effect when a new track starts playing
-        updateProgress();
-    }
-
-    function startNewTrack(track, index) {
-        audioPlayer.src = track.url;
-        audioPlayer.play();
-        currentTrackIndex = index;
         currentTrack.textContent = track.name;
-        isPlaying = true;
-        updateProgress();
-    }
-
-    // Fade out effect
-    function fadeOut(callback) {
-        const originalVolume = audioPlayer.volume;
-
-        const fadeOutInterval = setInterval(() => {
-            if (audioPlayer.volume > 0) {
-                audioPlayer.volume -= 0.1 / (fadeDuration / 100);
-            } else {
-                clearInterval(fadeOutInterval);
-                audioPlayer.pause();
-                audioPlayer.volume = originalVolume; // Reset volume
-                callback(); // Start fade-in after fade-out completes
-            }
-        }, 100);
-    }
-
-    // Update the progress bar
-    function updateProgress() {
-        audioPlayer.addEventListener('timeupdate', () => {
-            const progressPercent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-            progressBar.style.width = `${progressPercent}%`;
-            currentTimeDisplay.innerText = formatTime(audioPlayer.currentTime);
-            durationDisplay.innerText = formatTime(audioPlayer.duration);
-        });
-
-        audioPlayer.addEventListener('ended', () => {
+        updateProgressBar();
+        audioPlayer.onended = () => {
             isPlaying = false;
+            currentTrackIndex = null;
             currentTrack.textContent = "No Track Playing";
-        });
+        };
+        updateDuration();
     }
 
-    // Format time display
+    function fadeOut() {
+        const fadeInterval = setInterval(() => {
+            if (audioPlayer.volume > 0) {
+                audioPlayer.volume -= 0.1; // Decrease volume
+            } else {
+                clearInterval(fadeInterval);
+                audioPlayer.pause(); // Pause the track after fading out
+                audioPlayer.volume = 1; // Reset volume for next play
+            }
+        }, 100); // Adjust the speed of fade out
+    }
+
+    function updateProgressBar() {
+        if (isPlaying) {
+            const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            progressBar.style.width = progress + '%';
+            currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
+            durationDisplay.textContent = formatTime(audioPlayer.duration);
+            requestAnimationFrame(updateProgressBar);
+        }
+    }
+
     function formatTime(seconds) {
         const minutes = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
-        return `${minutes < 10 ? '0' + minutes : minutes}:${secs < 10 ? '0' + secs : secs}`;
+        return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }
 
-    // Drag-and-drop functionality
-    dropZone.addEventListener('dragover', (event) => {
-        event.preventDefault();
+    // Optional: Handle drag-and-drop for audio files
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
         dropZone.classList.add('dragging');
     });
 
@@ -354,28 +344,12 @@
         dropZone.classList.remove('dragging');
     });
 
-    dropZone.addEventListener('drop', (event) => {
-        event.preventDefault();
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
         dropZone.classList.remove('dragging');
-
-        const files = event.dataTransfer.files;
+        const files = e.dataTransfer.files;
         addTracks(files);
     });
-
-    // Play/Pause button functionality
-    playPauseBtn.addEventListener('click', () => {
-        if (isPlaying) {
-            audioPlayer.pause();
-            playPauseBtn.innerText = '▶️'; // Change button to play icon
-            isPlaying = false;
-        } else {
-            audioPlayer.play();
-            playPauseBtn.innerText = '❚❚'; // Change button to pause icon
-            isPlaying = true;
-            playWhoosh(); // Play the sound effect on play
-        }
-    });
 </script>
-
 </body>
 </html>
