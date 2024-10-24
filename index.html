@@ -29,7 +29,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin-bottom: 100px;
+            margin-bottom: 100px; /* Adjust to keep the player visible */
         }
         .track {
             background-color: #ffd966;
@@ -118,6 +118,7 @@
         button.upload:hover {
             background-color: #222;
         }
+        /* Drag-and-drop styles */
         .drop-zone {
             border: 2px dashed #ccc;
             border-radius: 10px;
@@ -129,57 +130,22 @@
         .drop-zone.dragging {
             border-color: #ffb554;
         }
-        /* Login styles */
-        .login-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-        }
-        .login-input {
-            margin: 10px;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .login-button {
-            padding: 10px 20px;
-            border: none;
-            background-color: #333;
-            color: white;
-            cursor: pointer;
-            border-radius: 5px;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-        .login-button:hover {
-            background-color: #222;
-        }
     </style>
 </head>
 <body>
 
-<div id="loginScreen" class="login-container">
-    <h1>Login</h1>
-    <input type="text" id="username" class="login-input" placeholder="Username">
-    <input type="password" id="password" class="login-input" placeholder="Password">
-    <button id="loginButton" class="login-button">Login</button>
-    <div id="loginError" style="color: red; display: none;">Invalid username or password.</div>
-</div>
-
-<div class="container" id="mediaContainer" style="display: none;">
+<div class="container">
     <h1>Media Player</h1>
+
+    <!-- Drop zone for drag-and-drop functionality -->
     <div id="dropZone" class="drop-zone">
         Drag & Drop your audio files here or click to upload
     </div>
+
     <div class="track-list" id="trackList">
         <!-- Dynamic track list will be added here -->
     </div>
+
     <input type="file" id="fileInput" multiple accept="audio/*" style="display:none;">
     <button class="upload" onclick="document.getElementById('fileInput').click()">Upload Tracks</button>
 </div>
@@ -198,29 +164,10 @@
     </div>
 </div>
 
+<!-- Sound effect for transitions -->
 <audio id="whooshEffect" src="TransitionEffect.wav"></audio>
 
 <script>
-    const validUsername = "user"; // Replace with your desired username
-    const validPassword = "pass"; // Replace with your desired password
-
-    const loginButton = document.getElementById('loginButton');
-    const loginError = document.getElementById('loginError');
-    const mediaContainer = document.getElementById('mediaContainer');
-    const loginScreen = document.getElementById('loginScreen');
-
-    loginButton.addEventListener('click', () => {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-
-        if (username === validUsername && password === validPassword) {
-            loginScreen.style.display = 'none';
-            mediaContainer.style.display = 'block';
-        } else {
-            loginError.style.display = 'block';
-        }
-    });
-
     const audioPlayer = new Audio();
     const whooshEffect = document.getElementById('whooshEffect');
     const trackList = document.getElementById('trackList');
@@ -237,8 +184,16 @@
     let playQueue = [];
     let currentTrackIndex = null;
     let isPlaying = false;
-    let fadeDuration = 250;
+    let fadeDuration = 250; // 1 second for fade effect
+    let whooshDuration = 500; // 1.5 second for whoosh effect
 
+    // Function to play the whoosh effect
+    function playWhoosh() {
+        whooshEffect.currentTime = 0; // Rewind to start
+        whooshEffect.play();
+    }
+
+    // Add tracks to the playlist
     fileInput.addEventListener('change', () => {
         const files = fileInput.files;
         addTracks(files);
@@ -252,10 +207,11 @@
             tracks.push(track);
         }
         updateTrackList();
+        playWhoosh(); // Play the sound effect when tracks are added
     }
 
     function updateTrackList() {
-        trackList.innerHTML = '';
+        trackList.innerHTML = ''; // Clear the existing list
         tracks.forEach((track, index) => {
             const trackElement = document.createElement('div');
             trackElement.classList.add('track');
@@ -267,97 +223,128 @@
             playNextButton.textContent = 'Play Next';
             playNextButton.addEventListener('click', () => {
                 addToQueue(index);
+                playWhoosh(); // Play the sound effect when adding to queue
             });
 
-            const playButton = document.createElement('button');
-            playButton.textContent = 'Play';
-            playButton.addEventListener('click', () => {
-                playTrack(index);
+            const removeButton = document.createElement('button');
+            removeButton.textContent = 'Remove';
+            removeButton.addEventListener('click', () => {
+                removeTrack(index);
+            });
+
+            const playFadeButton = document.createElement('button');
+            playFadeButton.textContent = 'Fade Play';
+            playFadeButton.addEventListener('click', () => {
+                playTrackWithTransition(index);
+            });
+
+            const playNormalButton = document.createElement('button');
+            playNormalButton.textContent = 'Normal Play';
+            playNormalButton.addEventListener('click', () => {
+                playTrackNormally(index);
             });
 
             trackElement.appendChild(trackInfo);
             trackElement.appendChild(playNextButton);
-            trackElement.appendChild(playButton);
+            trackElement.appendChild(playFadeButton);
+            trackElement.appendChild(playNormalButton);
+            trackElement.appendChild(removeButton);
             trackList.appendChild(trackElement);
         });
     }
 
+    // Add track to play queue
     function addToQueue(index) {
-        if (!playQueue.includes(index)) {
-            playQueue.push(index);
-            alert(`${tracks[index].name} added to play next.`);
+        playQueue.push(index);
+    }
+
+    // Remove track from the playlist
+    function removeTrack(index) {
+        tracks.splice(index, 1);
+        updateTrackList();
+    }
+
+    // Play track with whoosh and fade-in effect
+    function playTrackWithTransition(index) {
+        const track = tracks[index];
+
+        if (isPlaying) {
+            fadeOut(() => {
+                startNewTrackWithWhoosh(track, index);
+            });
+        } else {
+            startNewTrackWithWhoosh(track, index);
         }
     }
 
-    function playTrack(index) {
-        if (currentTrackIndex !== null) {
-            audioPlayer.pause();
-        }
-
-        currentTrackIndex = index;
-        audioPlayer.src = tracks[index].url;
-        currentTrack.textContent = tracks[index].name;
-        audioPlayer.play();
-        isPlaying = true;
-        updateDuration();
-        updateProgress();
-
-        playPauseBtn.textContent = '⏸️';
-
-        audioPlayer.addEventListener('ended', () => {
-            currentTrackIndex = null;
-            isPlaying = false;
-            playPauseBtn.textContent = '▶️';
-            if (playQueue.length > 0) {
-                const nextTrackIndex = playQueue.shift();
-                playTrack(nextTrackIndex);
-            }
-        });
-    }
-
-    playPauseBtn.addEventListener('click', () => {
+    // Play track normally (without transition)
+    function playTrackNormally(index) {
+        const track = tracks[index];
         if (isPlaying) {
             audioPlayer.pause();
-            playPauseBtn.textContent = '▶️';
-        } else {
-            audioPlayer.play();
-            playPauseBtn.textContent = '⏸️';
+            isPlaying = false;
         }
-        isPlaying = !isPlaying;
-    });
-
-    progressBarContainer.addEventListener('click', (event) => {
-        const rect = progressBarContainer.getBoundingClientRect();
-        const offsetX = event.clientX - rect.left;
-        const percentage = offsetX / progressBarContainer.clientWidth;
-        audioPlayer.currentTime = percentage * audioPlayer.duration;
-    });
-
-    function updateDuration() {
-        audioPlayer.addEventListener('loadedmetadata', () => {
-            durationDisplay.textContent = formatTime(audioPlayer.duration);
-        });
+        startNewTrack(track, index);
     }
 
+    function startNewTrackWithWhoosh(track, index) {
+        audioPlayer.src = track.url;
+        audioPlayer.play();
+        currentTrackIndex = index;
+        currentTrack.textContent = track.name;
+        isPlaying = true;
+        playWhoosh(); // Play the sound effect when a new track starts playing
+        updateProgress();
+    }
+
+    function startNewTrack(track, index) {
+        audioPlayer.src = track.url;
+        audioPlayer.play();
+        currentTrackIndex = index;
+        currentTrack.textContent = track.name;
+        isPlaying = true;
+        updateProgress();
+    }
+
+    // Fade out effect
+    function fadeOut(callback) {
+        const originalVolume = audioPlayer.volume;
+
+        const fadeOutInterval = setInterval(() => {
+            if (audioPlayer.volume > 0) {
+                audioPlayer.volume -= 0.1 / (fadeDuration / 100);
+            } else {
+                clearInterval(fadeOutInterval);
+                audioPlayer.pause();
+                audioPlayer.volume = originalVolume; // Reset volume
+                callback(); // Start fade-in after fade-out completes
+            }
+        }, 100);
+    }
+
+    // Update the progress bar
     function updateProgress() {
         audioPlayer.addEventListener('timeupdate', () => {
-            currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
-            const progressPercentage = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-            progressBar.style.width = progressPercentage + '%';
+            const progressPercent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            currentTimeDisplay.innerText = formatTime(audioPlayer.currentTime);
+            durationDisplay.innerText = formatTime(audioPlayer.duration);
+        });
+
+        audioPlayer.addEventListener('ended', () => {
+            isPlaying = false;
+            currentTrack.textContent = "No Track Playing";
         });
     }
 
+    // Format time display
     function formatTime(seconds) {
         const minutes = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
-        return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        return `${minutes < 10 ? '0' + minutes : minutes}:${secs < 10 ? '0' + secs : secs}`;
     }
 
-    // Drag and Drop functionality
-    dropZone.addEventListener('click', () => {
-        fileInput.click();
-    });
-
+    // Drag-and-drop functionality
     dropZone.addEventListener('dragover', (event) => {
         event.preventDefault();
         dropZone.classList.add('dragging');
@@ -370,9 +357,25 @@
     dropZone.addEventListener('drop', (event) => {
         event.preventDefault();
         dropZone.classList.remove('dragging');
+
         const files = event.dataTransfer.files;
         addTracks(files);
     });
+
+    // Play/Pause button functionality
+    playPauseBtn.addEventListener('click', () => {
+        if (isPlaying) {
+            audioPlayer.pause();
+            playPauseBtn.innerText = '▶️'; // Change button to play icon
+            isPlaying = false;
+        } else {
+            audioPlayer.play();
+            playPauseBtn.innerText = '❚❚'; // Change button to pause icon
+            isPlaying = true;
+            playWhoosh(); // Play the sound effect on play
+        }
+    });
 </script>
+
 </body>
 </html>
