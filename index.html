@@ -1,369 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cube Media Player</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #ffb554;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden; /* Prevent scrollbars on mobile */
-        }
-        .login-container, .player-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            width: 90%; /* Responsive width */
-            max-width: 400px; /* Max width for larger screens */
-        }
-        h1 {
-            font-size: 2rem;
-            color: #333;
-            text-align: center;
-        }
-        .track-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .track {
-            background-color: #ffd966;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column; /* Stack elements vertically for mobile */
-        }
-        .track h4 {
-            margin: 0;
-            font-size: 16px;
-        }
-        .track button {
-            background-color: #333;
-            border: none;
-            padding: 8px;
-            cursor: pointer;
-            border-radius: 5px;
-            color: #fff;
-            font-size: 12px;
-            transition: background-color 0.3s;
-            width: 100%; /* Full-width buttons for touch */
-            margin-top: 5px; /* Space between buttons */
-        }
-        .track button:hover {
-            background-color: #222;
-        }
-        .player {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #333;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #fff;
-            box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);
-            z-index: 10; /* Ensure player is on top */
-        }
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            align-items: center;
-            width: 100%; /* Full width for controls */
-        }
-        .controls button {
-            font-size: 36px;
-            background: none;
-            border: none;
-            color: #fff;
-            cursor: pointer;
-            transition: color 0.3s;
-            width: 60px; /* Fixed size for controls */
-        }
-        .controls button:hover {
-            color: #ffb554;
-        }
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background-color: #666;
-            margin: 10px 0;
-            position: relative;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .progress {
-            height: 100%;
-            background-color: #ffd966;
-            border-radius: 5px;
-        }
-        .timestamp {
-            font-size: 12px;
-            color: #ccc;
-        }
-        button.upload {
-            background-color: #333;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-            width: 100%; /* Full-width button */
-        }
-        button.upload:hover {
-            background-color: #222;
-        }
-        /* Drag-and-drop styles */
-        .drop-zone {
-            border: 2px dashed #ccc;
-            border-radius: 10px;
-            padding: 50px;
-            text-align: center;
-            font-size: 16px;
-            color: #333;
-            cursor: pointer; /* Indicate that it's clickable */
-        }
-        .drop-zone.dragging {
-            border-color: #ffb554;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cube Media Player with Spotify</title>
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
 </head>
 <body>
 
-<!-- Login Section -->
-<div id="loginSection" class="login-container">
-    <h1>Login</h1>
-    <input type="text" id="username" placeholder="Username" required>
-    <input type="password" id="password" placeholder="Password" required>
-    <button id="loginButton">Login</button>
-    <div id="loginError" style="color: red; display: none;">Invalid credentials, please try again.</div>
-</div>
+  <h1>Cube Media Player with Spotify</h1>
 
-<div id="playerSection" class="player-container" style="display: none;">
-    <h1>Media Player</h1>
+  <!-- Button to log in with Spotify -->
+  <button id="loginButton">Login with Spotify</button>
 
-    <!-- Drop zone for drag-and-drop functionality -->
-    <div id="dropZone" class="drop-zone">
-        Drag & Drop your audio files here or click to upload
-    </div>
+  <!-- Container for playlists -->
+  <div id="playlistsContainer">
+    <h2>Your Playlists</h2>
+    <ul id="playlists"></ul>
+  </div>
 
-    <div class="track-list" id="trackList">
-        <!-- Dynamic track list will be added here -->
-    </div>
+  <!-- Audio player controls -->
+  <div id="playerControls">
+    <button id="playButton">Play</button>
+    <button id="pauseButton">Pause</button>
+  </div>
 
-    <input type="file" id="fileInput" multiple accept="audio/*" style="display:none;">
-    <button class="upload" onclick="document.getElementById('fileInput').click()">Upload Tracks</button>
+  <script>
+    // Spotify App Credentials
+    const clientId = '46a00692d37c4f1fb34bbb369c0bd7ac';
+    const clientSecret = '967a221d12924c158ab3938f372b08d5';
+    const redirectUri = 'https://gobblerian.github.io/cube-mediaplayer/';  // Replace with your actual redirect URI
 
-    <div class="player">
-        <div class="controls">
-            <button id="playPauseBtn" title="Play/Pause">▶️</button>
-        </div>
-        <div class="progress-bar" id="progressBar">
-            <div class="progress" id="progress"></div>
-        </div>
-        <div>
-            <span id="currentTrack">No Track Playing</span>
-            <span class="timestamp" id="currentTime">00:00</span> / 
-            <span class="timestamp" id="duration">00:00</span>
-        </div>
-    </div>
-</div>
+    // Authorization URL for logging in to Spotify
+    const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user-read-playback-state%20user-modify-playback-state%20user-read-currently-playing%20playlist-read-private%20streaming`;
 
-<!-- Sound effect for transitions -->
-<audio id="whooshEffect" src="TransitionEffect.wav"></audio>
-
-<script>
-    const audioPlayer = new Audio();
-    const whooshEffect = document.getElementById('whooshEffect');
-    const trackList = document.getElementById('trackList');
-    const fileInput = document.getElementById('fileInput');
-    const currentTrack = document.getElementById('currentTrack');
-    const progressBar = document.getElementById('progress');
-    const progressBarContainer = document.getElementById('progressBar');
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const currentTimeDisplay = document.getElementById('currentTime');
-    const durationDisplay = document.getElementById('duration');
-    const dropZone = document.getElementById('dropZone');
-
-    let tracks = [];
-    let currentTrackIndex = null;
-    let isPlaying = false;
-
-    // Simple login system
-    const validUsername = "admin";
-    const validPassword = "password123";
-
-    document.getElementById('loginButton').addEventListener('click', function() {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-
-        if (username === validUsername && password === validPassword) {
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('playerSection').style.display = 'block';
-        } else {
-            document.getElementById('loginError').style.display = 'block';
-        }
-    });
-
-    // Add tracks to the playlist
-    fileInput.addEventListener('change', () => {
-        const files = fileInput.files;
-        addTracks(files);
-    });
-
-    function addTracks(files) {
-        for (let file of files) {
-            const url = URL.createObjectURL(file);
-            const name = file.name;
-            const track = { name, url };
-            tracks.push(track);
-        }
-        updateTrackList();
+    // Helper function to extract query parameters from the URL
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
     }
 
-    function updateTrackList() {
-        trackList.innerHTML = ''; // Clear the existing list
-        tracks.forEach((track, index) => {
-            const trackElement = document.createElement('div');
-            trackElement.classList.add('track');
+    // OAuth flow: Redirect user to login with Spotify
+    document.getElementById('loginButton').addEventListener('click', () => {
+      window.location.href = authUrl;
+    });
 
-            const trackInfo = document.createElement('h4');
-            trackInfo.textContent = track.name;
+    // Check if the URL contains a code (after login)
+    const code = getQueryParam('code');
+    if (code) {
+      // Exchange the code for an access token
+      fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic ' + btoa(clientId + ':' + clientSecret)
+        },
+        body: `grant_type=authorization_code&code=${code}&redirect_uri=${encodeURIComponent(redirectUri)}`
+      })
+        .then(response => response.json())
+        .then(data => {
+          const accessToken = data.access_token;
+          initializeSpotifyPlayer(accessToken);
+          fetchPlaylists(accessToken);
+        })
+        .catch(error => console.error('Error fetching access token:', error));
+    }
 
-            const playNextButton = document.createElement('button');
-            playNextButton.textContent = 'Play Next';
-            playNextButton.addEventListener('click', () => {
-                addToQueue(index);
-            });
-
-            const removeButton = document.createElement('button');
-            removeButton.textContent = 'Remove';
-            removeButton.addEventListener('click', () => {
-                removeTrack(index);
-            });
-
-            const playFadeButton = document.createElement('button');
-            playFadeButton.textContent = 'Fade Play';
-            playFadeButton.addEventListener('click', () => {
-                playTrackWithTransition(index);
-            });
-
-            const playNormalButton = document.createElement('button');
-            playNormalButton.textContent = 'Normal Play';
-            playNormalButton.addEventListener('click', () => {
-                playTrackNormally(index);
-            });
-
-            trackElement.appendChild(trackInfo);
-            trackElement.appendChild(playNextButton);
-            trackElement.appendChild(playFadeButton);
-            trackElement.appendChild(playNormalButton);
-            trackList.appendChild(trackElement);
+    // Initialize the Spotify Web Playback SDK
+    function initializeSpotifyPlayer(token) {
+      window.onSpotifyWebPlaybackSDKReady = () => {
+        const player = new Spotify.Player({
+          name: 'Cube Media Player',
+          getOAuthToken: cb => { cb(token); },
+          volume: 0.5
         });
+
+        // Error handling
+        player.addListener('initialization_error', ({ message }) => { console.error(message); });
+        player.addListener('authentication_error', ({ message }) => { console.error(message); });
+        player.addListener('account_error', ({ message }) => { console.error(message); });
+        player.addListener('playback_error', ({ message }) => { console.error(message); });
+
+        // Playback status updates
+        player.addListener('player_state_changed', state => { console.log(state); });
+
+        // Ready
+        player.addListener('ready', ({ device_id }) => {
+          console.log('Ready with Device ID', device_id);
+          transferPlaybackHere(device_id, token);
+
+          // Play and pause buttons
+          document.getElementById('playButton').addEventListener('click', () => {
+            fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+          });
+
+          document.getElementById('pauseButton').addEventListener('click', () => {
+            fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${device_id}`, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+          });
+        });
+
+        // Connect to the player
+        player.connect();
+      };
     }
 
-    function playTrackWithTransition(index) {
-        if (currentTrackIndex !== null) {
-            fadeOut(() => playTrack(index));
-        } else {
-            playTrack(index);
-        }
-        playWhoosh(); // Play the whoosh effect only on fade play
+    // Transfer playback to the web player
+    function transferPlaybackHere(device_id, token) {
+      fetch('https://api.spotify.com/v1/me/player', {
+        method: 'PUT',
+        body: JSON.stringify({
+          "device_ids": [device_id],
+          "play": true,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
     }
 
-    function playTrackNormally(index) {
-        if (currentTrackIndex !== null) {
-            fadeOut(() => playTrack(index));
-        } else {
-            playTrack(index);
-        }
+    // Fetch the user's playlists
+    function fetchPlaylists(token) {
+      fetch('https://api.spotify.com/v1/me/playlists', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+        .then(response => response.json())
+        .then(data => {
+          const playlists = data.items;
+          const playlistsContainer = document.getElementById('playlists');
+          playlistsContainer.innerHTML = '';
+
+          // Display playlists and set up click event to play them
+          playlists.forEach(playlist => {
+            const listItem = document.createElement('li');
+            listItem.textContent = playlist.name;
+            listItem.addEventListener('click', () => playPlaylist(playlist.id, token));
+            playlistsContainer.appendChild(listItem);
+          });
+        })
+        .catch(error => console.error('Error fetching playlists:', error));
     }
 
-    function playTrack(index) {
-        currentTrackIndex = index;
-        const track = tracks[currentTrackIndex];
-        audioPlayer.src = track.url;
-        audioPlayer.play();
-        isPlaying = true;
-        currentTrack.textContent = track.name;
-        updateProgressBar();
-        audioPlayer.onended = () => {
-            isPlaying = false;
-            currentTrackIndex = null;
-            currentTrack.textContent = "No Track Playing";
-        };
-        updateDuration();
+    // Play a selected playlist
+    function playPlaylist(playlistId, token) {
+      fetch(`https://api.spotify.com/v1/me/player/play`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          context_uri: `spotify:playlist:${playlistId}`
+        })
+      })
+      .catch(error => console.error('Error playing playlist:', error));
     }
+  </script>
 
-    function fadeOut(callback) {
-        const fadeInterval = setInterval(() => {
-            if (audioPlayer.volume > 0) {
-                audioPlayer.volume -= 0.1; // Decrease volume
-            } else {
-                clearInterval(fadeInterval);
-                audioPlayer.pause(); // Pause the track after fading out
-                audioPlayer.volume = 1; // Reset volume for next play
-                if (callback) callback(); // Execute the callback to play the next track
-            }
-        }, 100); // Adjust the speed of fade out
-    }
-
-    function updateProgressBar() {
-        if (isPlaying) {
-            const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-            progressBar.style.width = progress + '%';
-            currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
-            durationDisplay.textContent = formatTime(audioPlayer.duration);
-            requestAnimationFrame(updateProgressBar);
-        }
-    }
-
-    function formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-    }
-
-    // Optional: Handle drag-and-drop for audio files
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('dragging');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('dragging');
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragging');
-        const files = e.dataTransfer.files;
-        addTracks(files);
-    });
-
-    function playWhoosh() {
-        whooshEffect.currentTime = 0; // Reset the sound to the beginning
-        whooshEffect.play();
-    }
-</script>
 </body>
 </html>
