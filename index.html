@@ -25,36 +25,6 @@
             color: #333;
             text-align: center;
         }
-        .login-form {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .login-form input {
-            margin: 5px 0;
-            padding: 10px;
-            width: 200px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .login-form button {
-            background-color: #333;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-        .login-form button:hover {
-            background-color: #222;
-        }
-        .error-message {
-            color: red;
-            font-size: 12px;
-        }
         .track-list {
             display: flex;
             flex-direction: column;
@@ -167,14 +137,6 @@
 <div class="container">
     <h1>Media Player</h1>
 
-    <!-- Login Form -->
-    <div class="login-form" id="loginForm">
-        <input type="text" id="username" placeholder="Username" required>
-        <input type="password" id="password" placeholder="Password" required>
-        <button type="submit" onclick="login()">Login</button>
-        <div class="error-message" id="errorMessage"></div>
-    </div>
-
     <!-- Drop zone for drag-and-drop functionality -->
     <div id="dropZone" class="drop-zone">
         Drag & Drop your audio files here or click to upload
@@ -205,23 +167,6 @@
 <audio id="whooshEffect" src="TransitionEffect.wav"></audio>
 
 <script>
-    // JavaScript for login functionality
-    function login() {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const errorMessage = document.getElementById('errorMessage');
-
-        // Simple validation (replace with your actual authentication logic)
-        if (username === "admin" && password === "password") {
-            errorMessage.textContent = ""; // Clear error message
-            // Hide the login form and show the media player
-            document.getElementById('loginForm').style.display = 'none';
-            // Show the media player (you can also initialize the player here if needed)
-        } else {
-            errorMessage.textContent = "Invalid username or password.";
-        }
-    }
-
     const audioPlayer = new Audio();
     const whooshEffect = document.getElementById('whooshEffect');
     const trackList = document.getElementById('trackList');
@@ -278,125 +223,167 @@
                 removeTrack(index);
             });
 
+            const playFadeButton = document.createElement('button');
+            playFadeButton.textContent = 'Fade Play';
+            playFadeButton.addEventListener('click', () => {
+                playTrackWithTransition(index);
+            });
+
+            const playNormalButton = document.createElement('button');
+            playNormalButton.textContent = 'Normal Play';
+            playNormalButton.addEventListener('click', () => {
+                playTrackNormally(index);
+            });
+
             trackElement.appendChild(trackInfo);
             trackElement.appendChild(playNextButton);
+            trackElement.appendChild(playFadeButton);
+            trackElement.appendChild(playNormalButton);
             trackElement.appendChild(removeButton);
             trackList.appendChild(trackElement);
         });
     }
 
+    // Add track to play queue
     function addToQueue(index) {
-        if (!playQueue.includes(index)) {
-            playQueue.push(index);
-            alert(`Added "${tracks[index].name}" to the queue!`);
-        }
+        playQueue.push(index);
     }
 
+    // Remove track from the playlist
     function removeTrack(index) {
         tracks.splice(index, 1);
         updateTrackList();
-        if (currentTrackIndex === index) {
-            audioPlayer.pause();
-            currentTrack.textContent = 'No Track Playing';
-            currentTimeDisplay.textContent = '00:00';
-            durationDisplay.textContent = '00:00';
-        }
-        if (currentTrackIndex > index) {
-            currentTrackIndex--;
+    }
+
+    // Play track with whoosh and fade-in effect
+    function playTrackWithTransition(index) {
+        const track = tracks[index];
+
+        if (isPlaying) {
+            fadeOut(() => {
+                startNewTrackWithWhoosh(track, index);
+            });
+        } else {
+            startNewTrackWithWhoosh(track, index);
         }
     }
 
-    // Play/Pause functionality
-    playPauseBtn.addEventListener('click', () => {
-        if (currentTrackIndex === null && tracks.length > 0) {
-            currentTrackIndex = 0; // Start with the first track if none is playing
-        }
+    // Play track normally (without transition)
+    function playTrackNormally(index) {
+        const track = tracks[index];
         if (isPlaying) {
-            fadeOut(audioPlayer, fadeDuration);
+            audioPlayer.pause();
+            isPlaying = false;
+        }
+        startNewTrack(track, index); // Directly start the track
+    }
+
+    // Start the track with whoosh effect and fade-in
+    function startNewTrackWithWhoosh(track, index) {
+        whooshEffect.currentTime = 0;
+        whooshEffect.play();
+        setTimeout(() => {
+            startNewTrack(track, index);
+        }, whooshDuration);
+    }
+
+    // Start the new track
+    function startNewTrack(track, index) {
+        audioPlayer.src = track.url;
+        audioPlayer.play();
+        currentTrackIndex = index;
+        isPlaying = true;
+        playPauseBtn.textContent = '⏸️';
+        currentTrack.textContent = track.name;
+        fadeIn();
+    }
+
+    // Fade-in effect
+    function fadeIn() {
+        audioPlayer.volume = 0;
+        const fadeStep = 0.05;
+        const fadeInterval = setInterval(() => {
+            if (audioPlayer.volume < 1) {
+                audioPlayer.volume = Math.min(audioPlayer.volume + fadeStep, 1);
+            } else {
+                clearInterval(fadeInterval);
+            }
+        }, fadeDuration / (1 / fadeStep));
+    }
+
+    // Fade-out effect
+    function fadeOut(callback) {
+        const fadeStep = 0.05;
+        const fadeInterval = setInterval(() => {
+            if (audioPlayer.volume > 0) {
+                audioPlayer.volume = Math.max(audioPlayer.volume - fadeStep, 0);
+            } else {
+                clearInterval(fadeInterval);
+                callback();
+            }
+        }, fadeDuration / (1 / fadeStep));
+    }
+
+    // Play/Pause button functionality
+    playPauseBtn.addEventListener('click', () => {
+        if (isPlaying) {
+            audioPlayer.pause();
             isPlaying = false;
             playPauseBtn.textContent = '▶️';
         } else {
-            playTrack(currentTrackIndex);
+            audioPlayer.play();
             isPlaying = true;
             playPauseBtn.textContent = '⏸️';
         }
     });
 
-    function playTrack(index) {
-        if (index < tracks.length) {
-            audioPlayer.src = tracks[index].url;
-            currentTrack.textContent = tracks[index].name;
-            audioPlayer.play();
-            updateProgress();
-            setInterval(updateProgress, 1000);
-            audioPlayer.addEventListener('ended', nextTrack);
-            updateDurationDisplay();
-            playNextEffect();
-        }
-    }
+    // Scrubbing/Seeking functionality
+    progressBarContainer.addEventListener('click', (e) => {
+        const rect = progressBarContainer.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const newTime = (clickX / progressBarContainer.clientWidth) * audioPlayer.duration;
+        audioPlayer.currentTime = newTime;
+    });
 
-    function nextTrack() {
+    // Update progress bar and time display
+    audioPlayer.addEventListener('timeupdate', () => {
+        const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        progressBar.style.width = `${progress}%`;
+
+        const currentMinutes = Math.floor(audioPlayer.currentTime / 60);
+        const currentSeconds = Math.floor(audioPlayer.currentTime % 60).toString().padStart(2, '0');
+        currentTimeDisplay.textContent = `${currentMinutes}:${currentSeconds}`;
+
+        const durationMinutes = Math.floor(audioPlayer.duration / 60);
+        const durationSeconds = Math.floor(audioPlayer.duration % 60).toString().padStart(2, '0');
+        durationDisplay.textContent = `${durationMinutes}:${durationSeconds}`;
+
+        // If 3 seconds or less remain, start the next track
+        if (audioPlayer.duration - audioPlayer.currentTime <= 3 && playQueue.length > 0) {
+            const nextTrackIndex = playQueue.shift();
+            playTrackWithTransition(nextTrackIndex);
+        }
+    });
+
+    // Handle track end event (if no next track is queued)
+    audioPlayer.addEventListener('ended', () => {
         if (playQueue.length > 0) {
-            const nextTrackIndex = playQueue.shift(); // Get the next track from the queue
-            currentTrackIndex = nextTrackIndex;
-            playTrack(currentTrackIndex);
+            const nextTrackIndex = playQueue.shift();
+            playTrackWithTransition(nextTrackIndex);
         } else {
-            currentTrackIndex = null;
-            currentTrack.textContent = 'No Track Playing';
             isPlaying = false;
             playPauseBtn.textContent = '▶️';
         }
-    }
+    });
 
-    function updateDurationDisplay() {
-        audioPlayer.addEventListener('loadedmetadata', () => {
-            const duration = audioPlayer.duration;
-            durationDisplay.textContent = formatTime(duration);
-        });
-    }
-
-    function updateProgress() {
-        const currentTime = audioPlayer.currentTime;
-        currentTimeDisplay.textContent = formatTime(currentTime);
-        progressBar.style.width = (currentTime / audioPlayer.duration) * 100 + '%';
-    }
-
-    function formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-    }
-
-    function fadeOut(audio, duration) {
-        let volume = 1;
-        const interval = 50;
-        const fadeOutInterval = setInterval(() => {
-            volume -= interval / duration;
-            if (volume <= 0) {
-                clearInterval(fadeOutInterval);
-                audio.pause();
-                audio.currentTime = 0; // Reset to start
-            } else {
-                audio.volume = volume;
-            }
-        }, interval);
-    }
-
-    function playNextEffect() {
-        whooshEffect.currentTime = 0; // Reset the whoosh effect
-        whooshEffect.play();
-    }
-
-    // Drag-and-drop functionality
+    // Handle drag-and-drop upload
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         dropZone.classList.add('dragging');
     });
-
     dropZone.addEventListener('dragleave', () => {
         dropZone.classList.remove('dragging');
     });
-
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropZone.classList.remove('dragging');
@@ -404,5 +391,6 @@
         addTracks(files);
     });
 </script>
+
 </body>
 </html>
