@@ -3,135 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cube Media Player - Login</title>
+    <title>Cube Media Player - Sign In</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
     <style>
-        body {
+        body, html {
             font-family: 'Roboto', sans-serif;
-            background-color: #2b2b2b;
-            color: #fff;
+            background-color: #ffb554;
+            color: #333;
             margin: 0;
             padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .login-container, .container {
-            display: flex;
-            flex-direction: column;
+            width: 300px;
             padding: 20px;
-            background-color: #333;
+            background-color: #fff;
             border-radius: 8px;
-            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
-            max-width: 400px;
-            width: 100%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
-        .login-container h1, h1 {
-            font-size: 1.8rem;
-            color: #ffd966;
+        h1 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 10px;
         }
-        input, button {
+        input[type="text"], input[type="password"] {
+            width: 100%;
             padding: 10px;
-            margin: 10px 0;
+            margin: 8px 0;
             border-radius: 5px;
-            border: none;
-            font-size: 1rem;
-            outline: none;
+            border: 1px solid #ccc;
         }
         button {
-            background-color: #ffd966;
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
-            color: #333;
-            font-weight: bold;
+            width: 100%;
+            font-size: 16px;
             transition: background-color 0.3s;
         }
         button:hover {
-            background-color: #ffb554;
+            background-color: #222;
+        }
+        .media-player-container {
+            display: none; /* Hidden until login */
         }
     </style>
 </head>
 <body>
 
-<!-- Login Page -->
-<div class="login-container" id="loginPage">
-    <h1>Login</h1>
+<div class="login-container" id="loginContainer">
+    <h1>Sign In</h1>
     <input type="text" id="username" placeholder="Username">
     <input type="password" id="password" placeholder="Password">
     <button onclick="login()">Sign In</button>
-    <p id="loginMessage" style="color: #ffb554;"></p>
 </div>
 
-<!-- Media Player Page -->
-<div class="container" id="mediaPlayerPage" style="display: none;">
+<div class="container media-player-container" id="mediaPlayerContainer">
     <h1>Cube Media Player</h1>
-
     <div id="dropZone" class="drop-zone">
         Drag & Drop your audio files here or click to upload
     </div>
-
     <div class="track-list" id="trackList">
-        <!-- Dynamic track list -->
+        <!-- Track list goes here -->
     </div>
-
     <input type="file" id="fileInput" multiple accept="audio/*" style="display:none;">
     <button class="upload" onclick="document.getElementById('fileInput').click()">Upload Tracks</button>
-</div>
 
-<div class="player" id="playerControls" style="display: none;">
-    <div class="controls">
-        <button id="playPauseBtn">▶️</button>
-    </div>
-    <div class="progress-bar" id="progressBar">
-        <div class="progress" id="progress"></div>
-    </div>
-    <div>
-        <span id="currentTrack">No Track Playing</span>
-        <span id="currentTime">00:00</span> / 
-        <span id="duration">00:00</span>
+    <div class="player">
+        <div class="controls">
+            <button id="playPauseBtn">▶️</button>
+        </div>
+        <div class="progress-bar" id="progressBar">
+            <div class="progress" id="progress"></div>
+        </div>
+        <div>
+            <span id="currentTrack">No Track Playing</span>
+            <span class="timestamp" id="currentTime">00:00</span> / 
+            <span class="timestamp" id="duration">00:00</span>
+        </div>
     </div>
 </div>
 
 <audio id="whooshEffect" src="TransitionEffect.wav"></audio>
 
 <script>
-    // Login setup
     const defaultUsername = "thomas.edwards";
-    let defaultPassword = "1234"; // initial password for login
-    const loginPage = document.getElementById("loginPage");
-    const mediaPlayerPage = document.getElementById("mediaPlayerPage");
-    const playerControls = document.getElementById("playerControls");
+    const defaultPassword = "password123"; // Set an initial password
+    let isFirstLogin = true;
+    const mediaPlayerContainer = document.getElementById('mediaPlayerContainer');
+    const loginContainer = document.getElementById('loginContainer');
 
     function login() {
-        const username = document.getElementById("username").value;
-        const password = document.getElementById("password").value;
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
 
-        const storedPassword = localStorage.getItem("password") || defaultPassword;
-
-        if (username === defaultUsername && password === storedPassword) {
-            loginPage.style.display = "none";
-            mediaPlayerPage.style.display = "block";
-            playerControls.style.display = "flex";
-
-            // Allow password change if it's default
-            if (storedPassword === defaultPassword) {
-                changePassword();
+        if (username === defaultUsername && password === defaultPassword) {
+            if (isFirstLogin) {
+                alert("Please change your password.");
+                // Add code for password change
+                isFirstLogin = false;
             }
+            loginContainer.style.display = 'none';
+            mediaPlayerContainer.style.display = 'block';
         } else {
-            document.getElementById("loginMessage").innerText = "Incorrect username or password.";
+            alert("Incorrect username or password.");
         }
     }
 
-    function changePassword() {
-        const newPassword = prompt("Please enter a new password:");
-        if (newPassword) {
-            localStorage.setItem("password", newPassword);
-            alert("Password successfully changed!");
-        }
-    }
-
-    // Media Player
+    // Media Player Functionality
     const audioPlayer = new Audio();
     const whooshEffect = document.getElementById('whooshEffect');
     const trackList = document.getElementById('trackList');
@@ -145,11 +131,12 @@
     const dropZone = document.getElementById('dropZone');
 
     let tracks = [];
+    let playQueue = [];
+    let currentTrackIndex = null;
     let isPlaying = false;
     let fadeDuration = 250;
     let whooshDuration = 500;
 
-    // Track Upload
     fileInput.addEventListener('change', () => {
         const files = fileInput.files;
         addTracks(files);
@@ -159,13 +146,14 @@
         for (let file of files) {
             const url = URL.createObjectURL(file);
             const name = file.name;
-            tracks.push({ name, url });
+            const track = { name, url };
+            tracks.push(track);
         }
         updateTrackList();
     }
 
     function updateTrackList() {
-        trackList.innerHTML = ''; // Clear list
+        trackList.innerHTML = '';
         tracks.forEach((track, index) => {
             const trackElement = document.createElement('div');
             trackElement.classList.add('track');
@@ -173,33 +161,81 @@
             const trackInfo = document.createElement('h4');
             trackInfo.textContent = track.name;
 
-            const playButton = document.createElement('button');
-            playButton.textContent = 'Play';
-            playButton.addEventListener('click', () => playTrackWithTransition(index));
+            const playNextButton = document.createElement('button');
+            playNextButton.textContent = 'Play Next';
+            playNextButton.addEventListener('click', () => {
+                addToQueue(index);
+            });
+
+            const removeButton = document.createElement('button');
+            removeButton.textContent = 'Remove';
+            removeButton.addEventListener('click', () => {
+                removeTrack(index);
+            });
+
+            const playFadeButton = document.createElement('button');
+            playFadeButton.textContent = 'Fade Play';
+            playFadeButton.addEventListener('click', () => {
+                playTrackWithTransition(index);
+            });
+
+            const playNormalButton = document.createElement('button');
+            playNormalButton.textContent = 'Normal Play';
+            playNormalButton.addEventListener('click', () => {
+                playTrackNormally(index);
+            });
 
             trackElement.appendChild(trackInfo);
-            trackElement.appendChild(playButton);
+            trackElement.appendChild(playNextButton);
+            trackElement.appendChild(playFadeButton);
+            trackElement.appendChild(playNormalButton);
+            trackElement.appendChild(removeButton);
             trackList.appendChild(trackElement);
         });
     }
 
+    function addToQueue(index) {
+        playQueue.push(index);
+    }
+
+    function removeTrack(index) {
+        tracks.splice(index, 1);
+        updateTrackList();
+    }
+
     function playTrackWithTransition(index) {
         const track = tracks[index];
+
         if (isPlaying) {
-            fadeOut(() => startNewTrackWithWhoosh(track, index));
+            fadeOut(() => {
+                startNewTrackWithWhoosh(track, index);
+            });
         } else {
             startNewTrackWithWhoosh(track, index);
         }
     }
 
+    function playTrackNormally(index) {
+        const track = tracks[index];
+        if (isPlaying) {
+            audioPlayer.pause();
+            isPlaying = false;
+        }
+        startNewTrack(track, index);
+    }
+
     function startNewTrackWithWhoosh(track, index) {
+        whooshEffect.currentTime = 0;
         whooshEffect.play();
-        setTimeout(() => startNewTrack(track, index), whooshDuration);
+        setTimeout(() => {
+            startNewTrack(track, index);
+        }, whooshDuration);
     }
 
     function startNewTrack(track, index) {
         audioPlayer.src = track.url;
         audioPlayer.play();
+        currentTrackIndex = index;
         isPlaying = true;
         playPauseBtn.textContent = '⏸️';
         currentTrack.textContent = track.name;
@@ -237,23 +273,54 @@
             playPauseBtn.textContent = '▶️';
         } else {
             audioPlayer.play();
-            isPlaying = true;
+            is
             playPauseBtn.textContent = '⏸️';
+            isPlaying = true;
         }
     });
 
     audioPlayer.addEventListener('timeupdate', () => {
-        const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-        progressBar.style.width = `${progress}%`;
+        const progressPercent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        progressBar.style.width = `${progressPercent}%`;
         currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
         durationDisplay.textContent = formatTime(audioPlayer.duration);
     });
 
-    function formatTime(time) {
-        const minutes = Math.floor(time / 60);
-        const seconds = Math.floor(time % 60).toString().padStart(2, '0');
-        return `${minutes}:${seconds}`;
+    audioPlayer.addEventListener('ended', () => {
+        if (playQueue.length > 0) {
+            const nextTrackIndex = playQueue.shift();
+            playTrackWithTransition(nextTrackIndex);
+        } else if (currentTrackIndex !== null && currentTrackIndex < tracks.length - 1) {
+            playTrackWithTransition(currentTrackIndex + 1);
+        } else {
+            isPlaying = false;
+            playPauseBtn.textContent = '▶️';
+            currentTrack.textContent = 'No Track Playing';
+        }
+    });
+
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
+
+    // Drag and drop handling
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragging');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragging');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragging');
+        const files = e.dataTransfer.files;
+        addTracks(files);
+    });
 </script>
 
 </body>
