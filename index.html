@@ -25,6 +25,11 @@
             color: #333;
             text-align: center;
         }
+        .clock {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-top: -20px; /* Adjusts clock position */
+        }
         .track-list {
             display: flex;
             flex-direction: column;
@@ -135,7 +140,8 @@
 <body>
 
 <div class="container">
-    <h1>Media Player</h1>
+    <h1>CUBE MEDIA PLAYER</h1>
+    <div class="clock" id="londonClock"></div> <!-- Added clock element -->
 
     <!-- Drop zone for drag-and-drop functionality -->
     <div id="dropZone" class="drop-zone">
@@ -178,6 +184,7 @@
     const currentTimeDisplay = document.getElementById('currentTime');
     const durationDisplay = document.getElementById('duration');
     const dropZone = document.getElementById('dropZone');
+    const londonClock = document.getElementById('londonClock');
 
     let tracks = [];
     let playQueue = [];
@@ -185,6 +192,17 @@
     let isPlaying = false;
     let fadeDuration = 250; // 1 second for fade effect
     let whooshDuration = 500; // 1.5 second for whoosh effect
+
+    // Function to update the London clock
+    function updateClock() {
+        const now = new Date();
+        const options = { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        const formatter = new Intl.DateTimeFormat([], options);
+        londonClock.textContent = formatter.format(now);
+    }
+
+    setInterval(updateClock, 1000); // Update clock every second
+    updateClock(); // Initial call to set the clock immediately
 
     // Add tracks to the playlist
     fileInput.addEventListener('change', () => {
@@ -259,138 +277,107 @@
     function playTrackWithTransition(index) {
         const track = tracks[index];
 
-        if (isPlaying) {
-            fadeOut(() => {
-                startNewTrackWithWhoosh(track, index);
-            });
-        } else {
-            startNewTrackWithWhoosh(track, index);
+        if (currentTrackIndex !== null) {
+            fadeOut();
         }
-    }
 
-    // Play track normally (without transition)
-    function playTrackNormally(index) {
-        const track = tracks[index];
-        if (isPlaying) {
-            audioPlayer.pause();
-            isPlaying = false;
-        }
-        startNewTrack(track, index); // Directly start the track
-    }
-
-    // Start the track with whoosh effect and fade-in
-    function startNewTrackWithWhoosh(track, index) {
-        whooshEffect.currentTime = 0;
-        whooshEffect.play();
-        setTimeout(() => {
-            startNewTrack(track, index);
-        }, whooshDuration);
-    }
-
-    // Start the new track
-    function startNewTrack(track, index) {
+        currentTrackIndex = index;
+        currentTrack.textContent = track.name;
         audioPlayer.src = track.url;
         audioPlayer.play();
-        currentTrackIndex = index;
-        isPlaying = true;
-        playPauseBtn.textContent = '⏸️';
-        currentTrack.textContent = track.name;
+        whooshEffect.currentTime = 0;
+        whooshEffect.play();
         fadeIn();
     }
 
-    // Fade-in effect
+    // Normal play without effects
+    function playTrackNormally(index) {
+        const track = tracks[index];
+
+        if (currentTrackIndex !== null) {
+            fadeOut();
+        }
+
+        currentTrackIndex = index;
+        currentTrack.textContent = track.name;
+        audioPlayer.src = track.url;
+        audioPlayer.play();
+        isPlaying = true;
+        playPauseBtn.textContent = '⏸️'; // Change button to pause symbol
+    }
+
+    // Fade out current track
+    function fadeOut() {
+        audioPlayer.volume = 1; // Start with full volume
+        const fadeOutInterval = setInterval(() => {
+            audioPlayer.volume -= 0.05;
+            if (audioPlayer.volume <= 0) {
+                clearInterval(fadeOutInterval);
+                audioPlayer.pause();
+                audioPlayer.volume = 1; // Reset volume for next play
+                if (currentTrackIndex !== null && playQueue.length > 0) {
+                    playTrackWithTransition(playQueue.shift());
+                }
+            }
+        }, fadeDuration / 20);
+    }
+
+    // Fade in new track
     function fadeIn() {
-        audioPlayer.volume = 0;
-        const fadeStep = 0.05;
-        const fadeInterval = setInterval(() => {
-            if (audioPlayer.volume < 1) {
-                audioPlayer.volume = Math.min(audioPlayer.volume + fadeStep, 1);
-            } else {
-                clearInterval(fadeInterval);
+        audioPlayer.volume = 0; // Start with no sound
+        audioPlayer.play();
+        const fadeInInterval = setInterval(() => {
+            audioPlayer.volume += 0.05;
+            if (audioPlayer.volume >= 1) {
+                clearInterval(fadeInInterval);
             }
-        }, fadeDuration / (1 / fadeStep));
+        }, fadeDuration / 20);
     }
 
-    // Fade-out effect
-    function fadeOut(callback) {
-        const fadeStep = 0.05;
-        const fadeInterval = setInterval(() => {
-            if (audioPlayer.volume > 0) {
-                audioPlayer.volume = Math.max(audioPlayer.volume - fadeStep, 0);
-            } else {
-                clearInterval(fadeInterval);
-                callback();
-            }
-        }, fadeDuration / (1 / fadeStep));
-    }
-
-    // Play/Pause button functionality
+    // Play/pause button functionality
     playPauseBtn.addEventListener('click', () => {
         if (isPlaying) {
             audioPlayer.pause();
-            isPlaying = false;
-            playPauseBtn.textContent = '▶️';
+            playPauseBtn.textContent = '▶️'; // Change button to play symbol
         } else {
             audioPlayer.play();
-            isPlaying = true;
-            playPauseBtn.textContent = '⏸️';
+            playPauseBtn.textContent = '⏸️'; // Change button to pause symbol
         }
-    });
-
-    // Scrubbing/Seeking functionality
-    progressBarContainer.addEventListener('click', (e) => {
-        const rect = progressBarContainer.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const newTime = (clickX / progressBarContainer.clientWidth) * audioPlayer.duration;
-        audioPlayer.currentTime = newTime;
+        isPlaying = !isPlaying;
     });
 
     // Update progress bar and time display
     audioPlayer.addEventListener('timeupdate', () => {
-        const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-        progressBar.style.width = `${progress}%`;
-
-        const currentMinutes = Math.floor(audioPlayer.currentTime / 60);
-        const currentSeconds = Math.floor(audioPlayer.currentTime % 60).toString().padStart(2, '0');
-        currentTimeDisplay.textContent = `${currentMinutes}:${currentSeconds}`;
-
-        const durationMinutes = Math.floor(audioPlayer.duration / 60);
-        const durationSeconds = Math.floor(audioPlayer.duration % 60).toString().padStart(2, '0');
-        durationDisplay.textContent = `${durationMinutes}:${durationSeconds}`;
-
-        // If 3 seconds or less remain, start the next track
-        if (audioPlayer.duration - audioPlayer.currentTime <= 3 && playQueue.length > 0) {
-            const nextTrackIndex = playQueue.shift();
-            playTrackWithTransition(nextTrackIndex);
-        }
+        const currentTime = audioPlayer.currentTime;
+        const duration = audioPlayer.duration;
+        currentTimeDisplay.textContent = formatTime(currentTime);
+        durationDisplay.textContent = formatTime(duration);
+        progressBar.style.width = (currentTime / duration) * 100 + '%';
     });
 
-    // Handle track end event (if no next track is queued)
-    audioPlayer.addEventListener('ended', () => {
-        if (playQueue.length > 0) {
-            const nextTrackIndex = playQueue.shift();
-            playTrackWithTransition(nextTrackIndex);
-        } else {
-            isPlaying = false;
-            playPauseBtn.textContent = '▶️';
-        }
-    });
+    // Format time display
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+    }
 
-    // Handle drag-and-drop upload
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
+    // Drag-and-drop functionality
+    dropZone.addEventListener('dragover', (event) => {
+        event.preventDefault();
         dropZone.classList.add('dragging');
     });
+
     dropZone.addEventListener('dragleave', () => {
         dropZone.classList.remove('dragging');
     });
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
+
+    dropZone.addEventListener('drop', (event) => {
+        event.preventDefault();
         dropZone.classList.remove('dragging');
-        const files = e.dataTransfer.files;
+        const files = event.dataTransfer.files;
         addTracks(files);
     });
 </script>
-
 </body>
 </html>
