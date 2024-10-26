@@ -28,13 +28,13 @@
         .clock {
             font-size: 1.5rem;
             text-align: center;
-            margin-top: -20px; /* Adjusts clock position */
+            margin-top: -20px;
         }
         .track-list {
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin-bottom: 100px; /* Adjust to keep the player visible */
+            margin-bottom: 100px;
         }
         .track {
             background-color: #ffd966;
@@ -140,10 +140,10 @@
 <body>
 
 <div class="container">
-    <h1>Media Player</h1>
-    <h3>by CUBE</h3>
+    <h1>CUBE MEDIA PLAYER</h1>
     <div class="clock" id="londonClock"></div> <!-- Added clock element -->
 
+    <!-- Drop zone for drag-and-drop functionality -->
     <div id="dropZone" class="drop-zone">
         Drag & Drop your audio files here or click to upload
     </div>
@@ -190,8 +190,8 @@
     let playQueue = [];
     let currentTrackIndex = null;
     let isPlaying = false;
-    let fadeDuration = 150; 
-    let whooshDuration = 300; 
+    let fadeDuration = 250; // 1 second for fade effect
+    let whooshDuration = 500; // 1.5 second for whoosh effect
 
     // Function to update the London clock
     function updateClock() {
@@ -262,18 +262,139 @@
         });
     }
 
-    function playTrackWithTransition(index) {
-        const track = tracks[index];
-        if (currentTrackIndex !== null) {
-            fadeOut(true); // Passing true to signal there is a queued track.
-        }
-        currentTrackIndex = index;
-        currentTrack.textContent = track.name;
-        audioPlayer.src = track.url;
-        whooshEffect.currentTime = 0;
-        whooshEffect.play(); // Play whoosh effect before track starts
-        audioPlayer.play();
-        fadeIn();
+    // Add track to play queue
+    function addToQueue(index) {
+        playQueue.push(index);
     }
 
-    function addToQueue(index)
+    // Remove track from the playlist
+    function removeTrack(index) {
+        tracks.splice(index, 1);
+        updateTrackList();
+    }
+
+    // Play track with whoosh and fade-in effect
+    function playTrackWithTransition(index) {
+        const track = tracks[index];
+
+        if (currentTrackIndex !== null) {
+            fadeOut();
+        }
+
+        currentTrackIndex = index;
+        audioPlayer.src = track.url;
+        whooshEffect.currentTime = 0;
+        whooshEffect.play();
+        setTimeout(() => {
+            fadeIn();
+            audioPlayer.play();
+            isPlaying = true;
+            updatePlayPauseButton();
+        }, whooshDuration);
+    }
+
+    // Play track normally without fade or transition effects
+    function playTrackNormally(index) {
+        const track = tracks[index];
+
+        if (currentTrackIndex !== null) {
+            audioPlayer.pause();
+        }
+
+        currentTrackIndex = index;
+        audioPlayer.src = track.url;
+        audioPlayer.play();
+        isPlaying = true;
+        updatePlayPauseButton();
+    }
+
+    function fadeOut() {
+        const interval = fadeDuration / 10;
+        let volume = 1.0;
+
+        const fade = setInterval(() => {
+            if (volume > 0.1) {
+                volume -= 0.1;
+                audioPlayer.volume = volume;
+            } else {
+                clearInterval(fade);
+                audioPlayer.pause();
+                audioPlayer.volume = 1;
+            }
+        }, interval);
+    }
+
+    function fadeIn() {
+        const interval = fadeDuration / 10;
+        let volume = 0.1;
+        audioPlayer.volume = volume;
+
+        const fade = setInterval(() => {
+            if (volume < 1) {
+                volume += 0.1;
+                audioPlayer.volume = volume;
+            } else {
+                clearInterval(fade);
+            }
+        }, interval);
+    }
+
+    function playNextInQueue() {
+        if (playQueue.length > 0) {
+            const nextTrackIndex = playQueue.shift();
+            playTrackWithTransition(nextTrackIndex);
+        }
+    }
+
+    // Play/pause toggle
+    playPauseBtn.addEventListener('click', () => {
+        if (isPlaying) {
+            audioPlayer.pause();
+        } else {
+            audioPlayer.play();
+        }
+        isPlaying = !isPlaying;
+        updatePlayPauseButton();
+    });
+
+    // Update play/pause button icon
+    function updatePlayPauseButton() {
+        playPauseBtn.textContent = isPlaying ? '⏸️' : '▶️';
+    }
+
+    // Handle track end to play the next track in queue
+    audioPlayer.addEventListener('ended', playNextInQueue);
+
+    // Progress bar
+    audioPlayer.addEventListener('timeupdate', () => {
+        const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        progressBar.style.width = `${progress}%`;
+        currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
+        durationDisplay.textContent = formatTime(audioPlayer.duration);
+    });
+
+    function formatTime(seconds) {
+        const min = Math.floor(seconds / 60);
+        const sec = Math.floor(seconds % 60);
+        return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+    }
+
+    // Drag-and-drop for file upload
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragging');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragging');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragging');
+        const files = e.dataTransfer.files;
+        addTracks(files);
+    });
+</script>
+</body>
+</html>
