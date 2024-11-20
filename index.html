@@ -3,9 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CUBE: Media Player</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <title>Cube Media Player</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #ffb554;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #333;
+            text-align: center;
+        }
+
+        .clock {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-top: -20px;
+        }
+
+        /* Track List Styles */
+        .track-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 100px;
+        }
+
+        .track {
+            background-color: #ffd966;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .track h4 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .track button {
+            background-color: #333;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 12px;
+            transition: background-color 0.3s;
+        }
+
+        .track button:hover {
+            background-color: #222;
+        }
+
+        /* Player Styles */
+        .player {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #333;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+            box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .controls button {
+            font-size: 36px;
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .controls button:hover {
+            color: #ffb554;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #666;
+            margin: 10px 0;
+            position: relative;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: #ffd966;
+            border-radius: 5px;
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        /* Upload Button */
+        button.upload {
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button.upload:hover {
+            background-color: #222;
+        }
+
+        /* Drag-and-Drop Styles */
+        .drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 50px;
+            text-align: center;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .drop-zone.dragging {
+            border-color: #ffb554;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -36,6 +188,85 @@
     </div>
 
     <audio id="whooshEffect" src="TransitionEffect.wav"></audio>
-    <script src="scripts.js"></script>
+    <script>
+        const audioPlayer = new Audio();
+        const whooshEffect = document.getElementById('whooshEffect');
+        const trackList = document.getElementById('trackList');
+        const fileInput = document.getElementById('fileInput');
+        const currentTrack = document.getElementById('currentTrack');
+        const progressBar = document.getElementById('progress');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const currentTimeDisplay = document.getElementById('currentTime');
+        const durationDisplay = document.getElementById('duration');
+        const dropZone = document.getElementById('dropZone');
+        const londonClock = document.getElementById('londonClock');
+
+        let tracks = [];
+        let currentTrackIndex = null;
+        let isPlaying = false;
+
+        // Update London Clock
+        function updateClock() {
+            const now = new Date();
+            const options = { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            londonClock.textContent = new Intl.DateTimeFormat([], options).format(now);
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Add Tracks
+        fileInput.addEventListener('change', () => addTracks(fileInput.files));
+
+        function addTracks(files) {
+            for (let file of files) {
+                const url = URL.createObjectURL(file);
+                tracks.push({ name: file.name, url });
+            }
+            updateTrackList();
+        }
+
+        function updateTrackList() {
+            trackList.innerHTML = '';
+            tracks.forEach((track, index) => {
+                const trackElement = document.createElement('div');
+                trackElement.classList.add('track');
+
+                const trackInfo = document.createElement('h4');
+                trackInfo.textContent = track.name;
+
+                const playButton = document.createElement('button');
+                playButton.textContent = 'Play';
+                playButton.addEventListener('click', () => playTrack(index));
+
+                const removeButton = document.createElement('button');
+                removeButton.textContent = 'Remove';
+                removeButton.addEventListener('click', () => removeTrack(index));
+
+                trackElement.append(trackInfo, playButton, removeButton);
+                trackList.appendChild(trackElement);
+            });
+        }
+
+        // Play Track
+        function playTrack(index) {
+            if (currentTrackIndex !== null) audioPlayer.pause();
+            currentTrackIndex = index;
+            audioPlayer.src = tracks[index].url;
+            audioPlayer.play();
+            isPlaying = true;
+            currentTrack.textContent = tracks[index].name;
+            updatePlayPauseButton();
+        }
+
+        // Utilities
+        function removeTrack(index) {
+            tracks.splice(index, 1);
+            updateTrackList();
+        }
+
+        function updatePlayPauseButton() {
+            playPauseBtn.textContent = isPlaying ? '⏸️' : '▶️';
+        }
+    </script>
 </body>
 </html>
