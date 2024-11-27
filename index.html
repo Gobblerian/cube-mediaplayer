@@ -4,342 +4,285 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cube Media Player</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Georgia&display=swap">
     <style>
-        /* General Light Mode Styles */
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Georgia', serif;
+            background-color: #f4f4f4;
+            color: #333;
             margin: 0;
             padding: 0;
-            background-color: #f7f7f7;
-            color: #333;
-        }
-
-        .container {
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            height: 100vh;
-        }
-
-        /* Header Styles */
-        .header {
-            background-color: #e0e0e0;
-            padding: 10px 20px;
-            display: flex;
             justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #ccc;
         }
-
-        .header h1 {
-            margin: 0;
-            font-size: 1.5rem;
+        .container {
+            padding: 20px;
+        }
+        h1 {
+            font-size: 2rem;
             color: #555;
+            text-align: center;
         }
-
-        .header .clock {
-            font-size: 1rem;
+        .clock {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-top: -10px;
             color: #777;
         }
-
-        /* Content Styles */
-        .content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        .crates-section {
-            margin-bottom: 20px;
-        }
-
-        .crates-section h2 {
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-        }
-
-        .crate {
-            margin-bottom: 10px;
-        }
-
-        .crate button {
-            background-color: #e0e0e0;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            font-size: 1rem;
-            border-radius: 5px;
-            margin-right: 10px;
-        }
-
-        .crate button:hover {
-            background-color: #ccc;
-        }
-
         .track-list {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
+            margin: 20px 0;
         }
-
         .track {
+            background-color: #ddd;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 15px;
-            border-bottom: 1px solid #ddd;
-            background-color: #fff;
-            border-radius: 5px;
-            margin-bottom: 5px;
         }
-
-        .track:hover {
-            background-color: #f0f0f0;
-        }
-
         .track h4 {
             margin: 0;
-            font-size: 1rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            font-size: 16px;
+            flex: 1;
         }
-
-        .track-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .track button {
-            background-color: #e0e0e0;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-size: 0.9rem;
+        .track input {
+            width: 80px;
+            margin-right: 10px;
+            padding: 5px;
+            border: 1px solid #bbb;
             border-radius: 5px;
+        }
+        .track button {
+            background-color: #555;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 12px;
             transition: background-color 0.3s;
+            margin-left: 5px;
         }
-
         .track button:hover {
-            background-color: #ccc;
+            background-color: #333;
         }
-
-        /* Player Styles */
         .player {
-            background-color: #e0e0e0;
-            padding: 15px 20px;
-            border-top: 2px solid #ccc;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #333;
+            padding: 10px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: space-between;
+            color: #fff;
+            box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);
         }
-
-        .player .controls {
+        .controls {
             display: flex;
+            justify-content: center;
+            gap: 20px;
             align-items: center;
-            gap: 15px;
         }
-
-        .player button {
+        .controls button {
+            font-size: 36px;
             background: none;
             border: none;
-            font-size: 1.5rem;
-            color: #777;
+            color: #fff;
             cursor: pointer;
             transition: color 0.3s;
         }
-
-        .player button:hover {
-            color: #555;
+        .controls button:hover {
+            color: #bbb;
         }
-
         .progress-bar {
-            flex-grow: 1;
+            width: 100%;
             height: 8px;
-            background-color: #ccc;
-            margin: 0 15px;
+            background-color: #666;
+            margin: 10px 0;
             position: relative;
-            border-radius: 5px;
-            overflow: hidden;
             cursor: pointer;
+            border-radius: 5px;
         }
-
         .progress {
             height: 100%;
-            background-color: #777;
-            width: 0;
+            background-color: #bbb;
+            border-radius: 5px;
         }
-
-        .timestamps {
-            font-size: 0.9rem;
+        .timestamp {
+            font-size: 12px;
+            color: #ccc;
+        }
+        button.upload {
+            background-color: #555;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button.upload:hover {
+            background-color: #333;
+        }
+        .drop-zone {
+            border: 2px dashed #bbb;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            font-size: 16px;
             color: #555;
-            display: flex;
-            gap: 5px;
+        }
+        .drop-zone.dragging {
+            border-color: #888;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1>Cube Media Player</h1>
-            <div class="clock" id="londonClock"></div>
-        </header>
 
-        <!-- Content -->
-        <div class="content">
-            <div class="crates-section">
-                <h2>Crates</h2>
-                <div class="crate">
-                    <button onclick="createCrate()">+ New Crate</button>
-                </div>
-                <ul class="track-list" id="crateList">
-                    <!-- Crates dynamically added -->
-                </ul>
-            </div>
-            <h2>Tracks</h2>
-            <button class="upload" onclick="document.getElementById('fileInput').click()">Upload Tracks</button>
-            <input type="file" id="fileInput" multiple accept="audio/*" style="display: none;">
-            <ul class="track-list" id="trackList">
-                <!-- Tracks dynamically added -->
-            </ul>
-        </div>
+<div class="container">
+    <h1>CUBE MEDIA PLAYER</h1>
+    <div class="clock" id="londonClock"></div>
 
-        <!-- Player -->
-        <div class="player">
-            <button id="playPauseBtn" title="Play/Pause">▶️</button>
-            <div class="progress-bar" id="progressBar">
-                <div class="progress" id="progress"></div>
-            </div>
-            <div class="timestamps">
-                <span id="currentTime">00:00</span>
-                <span>/</span>
-                <span id="duration">00:00</span>
-            </div>
-        </div>
+    <div id="dropZone" class="drop-zone">
+        Drag & Drop your audio files here or click to upload
     </div>
 
-    <audio id="audioPlayer"></audio>
-    <audio id="whooshEffect" src="TransitionEffect.wav"></audio>
+    <div class="track-list" id="trackList">
+        <!-- Dynamic track list with timestamps -->
+    </div>
 
-    <script>
-        const fileInput = document.getElementById('fileInput');
-        const trackList = document.getElementById('trackList');
-        const crateList = document.getElementById('crateList');
-        const audioPlayer = document.getElementById('audioPlayer');
-        const whooshEffect = document.getElementById('whooshEffect');
-        const progressBar = document.getElementById('progress');
-        const progressContainer = document.getElementById('progressBar');
-        const playPauseBtn = document.getElementById('playPauseBtn');
-        const currentTimeDisplay = document.getElementById('currentTime');
-        const durationDisplay = document.getElementById('duration');
-        const londonClock = document.getElementById('londonClock');
+    <input type="file" id="fileInput" multiple accept="audio/*" style="display:none;">
+    <button class="upload" onclick="document.getElementById('fileInput').click()">Upload Tracks</button>
+</div>
 
-        let tracks = [];
-        let crates = [];
-        let currentTrackIndex = null;
-        let isPlaying = false;
+<div class="player">
+    <div class="controls">
+        <button id="playPauseBtn" title="Play/Pause">▶️</button>
+    </div>
+    <div class="progress-bar" id="progressBar">
+        <div class="progress" id="progress"></div>
+    </div>
+    <div>
+        <span id="currentTrack">No Track Playing</span>
+        <span class="timestamp" id="currentTime">00:00</span> / 
+        <span class="timestamp" id="duration">00:00</span>
+    </div>
+</div>
 
-        // Update London Clock
-        function updateClock() {
-            const now = new Date();
-            const options = { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-            londonClock.textContent = new Intl.DateTimeFormat([], options).format(now);
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
+<audio id="audioPlayer"></audio>
 
-        // Add Tracks
-        fileInput.addEventListener('change', () => addTracks(fileInput.files));
+<script>
+    const audioPlayer = document.getElementById('audioPlayer');
+    const trackList = document.getElementById('trackList');
+    const fileInput = document.getElementById('fileInput');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const currentTrackDisplay = document.getElementById('currentTrack');
+    const currentTimeDisplay = document.getElementById('currentTime');
+    const durationDisplay = document.getElementById('duration');
+    const progressBar = document.getElementById('progress');
+    const progressBarContainer = document.getElementById('progressBar');
+    const londonClock = document.getElementById('londonClock');
 
-        function addTracks(files) {
-            for (let file of files) {
-                const url = URL.createObjectURL(file);
-                tracks.push({ name: file.name, url, duration: '00:00' }); // Replace with actual duration retrieval if needed
-            }
-            renderTrackList();
-        }
+    let tracks = [];
+    let currentTrackIndex = null;
+    let isPlaying = false;
+    let startTime = null;
 
-        function renderTrackList() {
-            trackList.innerHTML = '';
-            tracks.forEach((track, index) => {
-                const li = document.createElement('li');
-                li.className = 'track';
+    // Update clock
+    function updateClock() {
+        const now = new Date();
+        londonClock.textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    setInterval(updateClock, 1000);
 
-                const trackName = document.createElement('h4');
-                trackName.textContent = `${track.name}  |  ${track.duration}`;
-
-                const buttons = document.createElement('div');
-                buttons.className = 'track-buttons';
-
-                const playButton = document.createElement('button');
-                playButton.textContent = 'Fade Play';
-                playButton.addEventListener('click', () => fadePlayTrack(index));
-
-                const removeButton = document.createElement('button');
-                removeButton.textContent = 'Remove';
-                removeButton.addEventListener('click', () => removeTrack(index));
-
-                buttons.append(playButton, removeButton);
-                li.append(trackName, buttons);
-                trackList.appendChild(li);
-            });
-        }
-
-        function fadePlayTrack(index) {
-            whooshEffect.play();
-            setTimeout(() => {
-                playTrack(index);
-            }, 300);
-        }
-
-        function playTrack(index) {
-            if (currentTrackIndex !== null) audioPlayer.pause();
-            currentTrackIndex = index;
-            audioPlayer.src = tracks[index].url;
-            audioPlayer.play();
-            isPlaying = true;
-            updatePlayer();
-        }
-
-        function updatePlayer() {
-            playPauseBtn.textContent = isPlaying ? '⏸️' : '▶️';
-        }
-
-        function removeTrack(index) {
-            tracks.splice(index, 1);
-            renderTrackList();
-        }
-
-        playPauseBtn.addEventListener('click', () => {
-            if (isPlaying) {
-                audioPlayer.pause();
-                isPlaying = false;
-            } else if (currentTrackIndex !== null) {
-                audioPlayer.play();
-                isPlaying = true;
-            }
-            updatePlayer();
+    fileInput.addEventListener('change', () => {
+        Array.from(fileInput.files).forEach(file => {
+            const url = URL.createObjectURL(file);
+            tracks.push({ name: file.name, url, duration: 0, start: '' });
         });
+        renderTrackList();
+    });
 
-        // Crate System
-        function createCrate() {
-            const name = prompt('Enter crate name:');
-            if (name) {
-                crates.push({ name, tracks: [] });
-                renderCrateList();
-            }
-        }
+    function renderTrackList() {
+        trackList.innerHTML = '';
+        tracks.forEach((track, index) => {
+            const trackElement = document.createElement('div');
+            trackElement.className = 'track';
 
-        function renderCrateList() {
-            crateList.innerHTML = '';
-            crates.forEach(crate => {
-                const li = document.createElement('li');
-                li.textContent = crate.name;
-                crateList.appendChild(li);
+            const title = document.createElement('h4');
+            title.textContent = `${index + 1}. ${track.name}`;
+
+            const startInput = document.createElement('input');
+            startInput.type = 'time';
+            startInput.value = track.start || '';
+            startInput.addEventListener('change', e => {
+                track.start = e.target.value;
+                calculateStartTimes();
             });
+
+            const playButton = document.createElement('button');
+            playButton.textContent = 'Play';
+            playButton.addEventListener('click', () => playTrack(index));
+
+            trackElement.appendChild(title);
+            trackElement.appendChild(startInput);
+            trackElement.appendChild(playButton);
+            trackList.appendChild(trackElement);
+        });
+    }
+
+    function calculateStartTimes() {
+        let currentTime = startTime ? parseTime(startTime) : 0;
+        tracks.forEach(track => {
+            if (!track.start) {
+                track.start = formatTime(currentTime);
+            }
+            currentTime += track.duration || 300; // Default duration: 5 minutes
+        });
+        renderTrackList();
+    }
+
+    function parseTime(time) {
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 3600 + minutes * 60;
+    }
+
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        seconds = seconds % 60;
+        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function playTrack(index) {
+        const track = tracks[index];
+        currentTrackIndex = index;
+        audioPlayer.src = track.url;
+        audioPlayer.play();
+        currentTrackDisplay.textContent = track.name;
+        isPlaying = true;
+    }
+
+    playPauseBtn.addEventListener('click', () => {
+        if (isPlaying) {
+            audioPlayer.pause();
+        } else {
+            audioPlayer.play();
         }
-    </script>
+        isPlaying = !isPlaying;
+    });
+
+    audioPlayer.addEventListener('timeupdate', () => {
+        const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        progressBar.style.width = `${progress}%`;
+        currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
+        durationDisplay.textContent = formatTime(audioPlayer.duration);
+    });
+</script>
 </body>
 </html>
