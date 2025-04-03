@@ -3,25 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CUBE: CartPlayer 0.1</title>
+    <title>PlayIt Cartwall Inspired</title>
     <style>
         body {
             font-family: sans-serif;
-            background-color: #f4f4f4;
+            background-color: #333;
+            color: #eee;
             margin: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        .cart-player {
-            background-color: #222;
-            color: #eee;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            width: 80%;
-            max-width: 600px;
+        .cartwall {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            width: 90%;
+            max-width: 960px;
+            padding: 10px;
+        }
+
+        .cart {
+            background-color: #555;
+            border: 1px solid #777;
+            border-radius: 5px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .cart:hover {
+            background-color: #666;
+        }
+
+        .cart.playing {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .cart-title {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .upload-section {
@@ -33,15 +65,15 @@
 
         #audio-upload {
             flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #555;
+            padding: 8px;
+            border: 1px solid #777;
             border-radius: 4px;
-            background-color: #333;
+            background-color: #444;
             color: #eee;
         }
 
         #upload-button {
-            padding: 10px 15px;
+            padding: 8px 12px;
             background-color: #5cb85c;
             color: white;
             border: none;
@@ -52,143 +84,86 @@
         #upload-button:hover {
             background-color: #4cae4c;
         }
-
-        .cart-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .cart-item {
-            background-color: #333;
-            border: 1px solid #444;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .cart-item-info {
-            flex-grow: 1;
-        }
-
-        .cart-item-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .cart-item-controls button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 8px 12px;
-            cursor: pointer;
-            margin-left: 10px;
-        }
-
-        .cart-item-controls button:hover {
-            background-color: #0056b3;
-        }
-
-        .cart-item-controls button.playing {
-            background-color: #d9534f;
-        }
-
-        .cart-item-controls button.playing:hover {
-            background-color: #c9302c;
-        }
     </style>
 </head>
 <body>
-    <div class="cart-player">
-        <div class="upload-section">
-            <input type="file" id="audio-upload" accept="audio/*" multiple>
-            <button id="upload-button">Add to Carts</button>
-        </div>
-
-        <ul class="cart-list" id="cart-list">
-            </ul>
+    <div class="upload-section">
+        <input type="file" id="audio-upload" accept="audio/*" multiple>
+        <button id="upload-button">Add Carts</button>
     </div>
+
+    <div class="cartwall" id="cartwall">
+        </div>
 
     <script>
         const audioUpload = document.getElementById('audio-upload');
         const uploadButton = document.getElementById('upload-button');
-        const cartList = document.getElementById('cart-list');
+        const cartwall = document.getElementById('cartwall');
         const audioPlayers = {}; // Store audio players by their ID
+        let currentlyPlaying = null; // Keep track of the currently playing cart ID
 
         uploadButton.addEventListener('click', () => {
-            audioUpload.click(); // Trigger file input click
+            audioUpload.click();
         });
 
         audioUpload.addEventListener('change', (event) => {
             const files = event.target.files;
             if (files) {
                 for (const file of files) {
-                    addAudioToCart(file);
+                    addAudioToCartwall(file);
                 }
                 audioUpload.value = ''; // Reset file input
             }
         });
 
-        function addAudioToCart(file) {
+        function addAudioToCartwall(file) {
             const reader = new FileReader();
 
             reader.onload = (e) => {
                 const audioUrl = e.target.result;
-                const cartItemId = `cart-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+                const cartId = `cart-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
-                const listItem = document.createElement('li');
-                listItem.classList.add('cart-item');
-                listItem.dataset.audioUrl = audioUrl;
-                listItem.dataset.cartId = cartItemId;
+                const cart = document.createElement('div');
+                cart.classList.add('cart');
+                cart.dataset.audioUrl = audioUrl;
+                cart.dataset.cartId = cartId;
+                cart.innerHTML = `<div class="cart-title">${file.name}</div>`;
 
-                listItem.innerHTML = `
-                    <div class="cart-item-info">
-                        <div class="cart-item-title">${file.name}</div>
-                    </div>
-                    <div class="cart-item-controls">
-                        <button class="play-button" data-cart-id="${cartItemId}">Play</button>
-                        <button class="stop-button" data-cart-id="${cartItemId}" disabled>Stop</button>
-                    </div>
-                `;
-
-                cartList.appendChild(listItem);
-
-                const playButton = listItem.querySelector('.play-button');
-                const stopButton = listItem.querySelector('.stop-button');
+                cartwall.appendChild(cart);
 
                 const audioElement = new Audio(audioUrl);
-                audioPlayers[cartItemId] = audioElement;
+                audioPlayers[cartId] = audioElement;
 
-                playButton.addEventListener('click', () => {
-                    // Stop any other playing audio
-                    for (const id in audioPlayers) {
-                        if (audioPlayers[id] !== audioElement && !audioPlayers[id].paused) {
-                            audioPlayers[id].pause();
-                            const otherPlayButton = document.querySelector(`.play-button[data-cart-id="${id}"]`);
-                            const otherStopButton = document.querySelector(`.stop-button[data-cart-id="${id}"]`);
-                            if (otherPlayButton) otherPlayButton.classList.remove('playing');
-                            if (otherStopButton) otherStopButton.setAttribute('disabled', true);
+                cart.addEventListener('click', () => {
+                    if (currentlyPlaying === cartId) {
+                        // Stop if already playing
+                        audioPlayers[currentlyPlaying].pause();
+                        audioPlayers[currentlyPlaying].currentTime = 0;
+                        const playingCart = document.querySelector(`.cart[data-cart-id="${currentlyPlaying}"]`);
+                        if (playingCart) {
+                            playingCart.classList.remove('playing');
                         }
+                        currentlyPlaying = null;
+                    } else {
+                        // Stop any other playing cart
+                        if (currentlyPlaying) {
+                            audioPlayers[currentlyPlaying].pause();
+                            audioPlayers[currentlyPlaying].currentTime = 0;
+                            const playingCart = document.querySelector(`.cart[data-cart-id="${currentlyPlaying}"]`);
+                            if (playingCart) {
+                                playingCart.classList.remove('playing');
+                            }
+                        }
+                        // Play the clicked cart
+                        audioElement.play();
+                        cart.classList.add('playing');
+                        currentlyPlaying = cartId;
                     }
-
-                    audioElement.play();
-                    playButton.classList.add('playing');
-                    stopButton.removeAttribute('disabled');
-                });
-
-                stopButton.addEventListener('click', () => {
-                    audioElement.pause();
-                    audioElement.currentTime = 0;
-                    playButton.classList.remove('playing');
-                    stopButton.setAttribute('disabled', true);
                 });
 
                 audioElement.addEventListener('ended', () => {
-                    playButton.classList.remove('playing');
-                    stopButton.setAttribute('disabled', true);
+                    cart.classList.remove('playing');
+                    currentlyPlaying = null;
                     audioElement.currentTime = 0;
                 });
             };
