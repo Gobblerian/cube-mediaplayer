@@ -3,286 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cube Media Player</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Georgia&display=swap">
+    <title>CUBE: CartPlayer 0.1</title>
     <style>
         body {
-            font-family: 'Georgia', serif;
+            font-family: sans-serif;
             background-color: #f4f4f4;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            height: 100vh;
+            margin: 20px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            align-items: center;
         }
-        .container {
-            padding: 20px;
-        }
-        h1 {
-            font-size: 2rem;
-            color: #555;
-            text-align: center;
-        }
-        .clock {
-            font-size: 1.5rem;
-            text-align: center;
-            margin-top: -10px;
-            color: #777;
-        }
-        .track-list {
-            margin: 20px 0;
-        }
-        .track {
-            background-color: #ddd;
-            padding: 10px;
-            margin: 5px 0;
+
+        .cart-player {
+            background-color: #222;
+            color: #eee;
             border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 80%;
+            max-width: 600px;
+        }
+
+        .upload-section {
+            margin-bottom: 20px;
             display: flex;
-            justify-content: space-between;
+            gap: 10px;
             align-items: center;
         }
-        .track h4 {
-            margin: 0;
-            font-size: 16px;
-            flex: 1;
-        }
-        .track input {
-            width: 80px;
-            margin-right: 10px;
-            padding: 5px;
-            border: 1px solid #bbb;
-            border-radius: 5px;
-        }
-        .track button {
-            background-color: #555;
-            border: none;
-            padding: 8px;
-            cursor: pointer;
-            border-radius: 5px;
-            color: #fff;
-            font-size: 12px;
-            transition: background-color 0.3s;
-            margin-left: 5px;
-        }
-        .track button:hover {
-            background-color: #333;
-        }
-        .player {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #333;
+
+        #audio-upload {
+            flex-grow: 1;
             padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #fff;
-            box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);
+            border: 1px solid #555;
+            border-radius: 4px;
+            background-color: #333;
+            color: #eee;
         }
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            align-items: center;
-        }
-        .controls button {
-            font-size: 36px;
-            background: none;
-            border: none;
-            color: #fff;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-        .controls button:hover {
-            color: #bbb;
-        }
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background-color: #666;
-            margin: 10px 0;
-            position: relative;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .progress {
-            height: 100%;
-            background-color: #bbb;
-            border-radius: 5px;
-        }
-        .timestamp {
-            font-size: 12px;
-            color: #ccc;
-        }
-        button.upload {
-            background-color: #555;
+
+        #upload-button {
+            padding: 10px 15px;
+            background-color: #5cb85c;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
         }
-        button.upload:hover {
+
+        #upload-button:hover {
+            background-color: #4cae4c;
+        }
+
+        .cart-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .cart-item {
             background-color: #333;
+            border: 1px solid #444;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        .drop-zone {
-            border: 2px dashed #bbb;
-            border-radius: 10px;
-            padding: 30px;
-            text-align: center;
-            font-size: 16px;
-            color: #555;
+
+        .cart-item-info {
+            flex-grow: 1;
         }
-        .drop-zone.dragging {
-            border-color: #888;
+
+        .cart-item-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .cart-item-controls button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 12px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .cart-item-controls button:hover {
+            background-color: #0056b3;
+        }
+
+        .cart-item-controls button.playing {
+            background-color: #d9534f;
+        }
+
+        .cart-item-controls button.playing:hover {
+            background-color: #c9302c;
         }
     </style>
 </head>
 <body>
+    <div class="cart-player">
+        <div class="upload-section">
+            <input type="file" id="audio-upload" accept="audio/*" multiple>
+            <button id="upload-button">Add to Carts</button>
+        </div>
 
-<div class="container">
-    <h1>CUBE MEDIA PLAYER</h1>
-    <div class="clock" id="londonClock"></div>
-
-    <div id="dropZone" class="drop-zone">
-        Drag & Drop your audio files here or click to upload
+        <ul class="cart-list" id="cart-list">
+            </ul>
     </div>
 
-    <div class="track-list" id="trackList">
-        <!-- Dynamic track list with timestamps -->
-    </div>
+    <script>
+        const audioUpload = document.getElementById('audio-upload');
+        const uploadButton = document.getElementById('upload-button');
+        const cartList = document.getElementById('cart-list');
+        const audioPlayers = {}; // Store audio players by their ID
 
-    <input type="file" id="fileInput" multiple accept="audio/*" style="display:none;">
-    <button class="upload" onclick="document.getElementById('fileInput').click()">Upload Tracks</button>
-</div>
-
-<div class="player">
-    <div class="controls">
-        <button id="playPauseBtn" title="Play/Pause">▶️</button>
-    </div>
-    <div class="progress-bar" id="progressBar">
-        <div class="progress" id="progress"></div>
-    </div>
-    <div>
-        <span id="currentTrack">No Track Playing</span>
-        <span class="timestamp" id="currentTime">00:00</span> / 
-        <span class="timestamp" id="duration">00:00</span>
-    </div>
-</div>
-
-<audio id="audioPlayer"></audio>
-
-<script>
-    const audioPlayer = document.getElementById('audioPlayer');
-    const trackList = document.getElementById('trackList');
-    const fileInput = document.getElementById('fileInput');
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const currentTrackDisplay = document.getElementById('currentTrack');
-    const currentTimeDisplay = document.getElementById('currentTime');
-    const durationDisplay = document.getElementById('duration');
-    const progressBar = document.getElementById('progress');
-    const progressBarContainer = document.getElementById('progressBar');
-    const londonClock = document.getElementById('londonClock');
-
-    let tracks = [];
-    let currentTrackIndex = null;
-    let isPlaying = false;
-    let startTime = null;
-
-    // Update clock
-    function updateClock() {
-        const now = new Date();
-        londonClock.textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    }
-    setInterval(updateClock, 1000);
-
-    fileInput.addEventListener('change', () => {
-        Array.from(fileInput.files).forEach(file => {
-            const url = URL.createObjectURL(file);
-            tracks.push({ name: file.name, url, duration: 0, start: '' });
+        uploadButton.addEventListener('click', () => {
+            audioUpload.click(); // Trigger file input click
         });
-        renderTrackList();
-    });
 
-    function renderTrackList() {
-        trackList.innerHTML = '';
-        tracks.forEach((track, index) => {
-            const trackElement = document.createElement('div');
-            trackElement.className = 'track';
-
-            const title = document.createElement('h4');
-            title.textContent = `${index + 1}. ${track.name}`;
-
-            const startInput = document.createElement('input');
-            startInput.type = 'time';
-            startInput.value = track.start || '';
-            startInput.addEventListener('change', e => {
-                track.start = e.target.value;
-                calculateStartTimes();
-            });
-
-            const playButton = document.createElement('button');
-            playButton.textContent = 'Play';
-            playButton.addEventListener('click', () => playTrack(index));
-
-            trackElement.appendChild(title);
-            trackElement.appendChild(startInput);
-            trackElement.appendChild(playButton);
-            trackList.appendChild(trackElement);
-        });
-    }
-
-    function calculateStartTimes() {
-        let currentTime = startTime ? parseTime(startTime) : 0;
-        tracks.forEach(track => {
-            if (!track.start) {
-                track.start = formatTime(currentTime);
+        audioUpload.addEventListener('change', (event) => {
+            const files = event.target.files;
+            if (files) {
+                for (const file of files) {
+                    addAudioToCart(file);
+                }
+                audioUpload.value = ''; // Reset file input
             }
-            currentTime += track.duration || 300; // Default duration: 5 minutes
         });
-        renderTrackList();
-    }
 
-    function parseTime(time) {
-        const [hours, minutes] = time.split(':').map(Number);
-        return hours * 3600 + minutes * 60;
-    }
+        function addAudioToCart(file) {
+            const reader = new FileReader();
 
-    function formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        seconds = seconds % 60;
-        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    }
+            reader.onload = (e) => {
+                const audioUrl = e.target.result;
+                const cartItemId = `cart-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
-    function playTrack(index) {
-        const track = tracks[index];
-        currentTrackIndex = index;
-        audioPlayer.src = track.url;
-        audioPlayer.play();
-        currentTrackDisplay.textContent = track.name;
-        isPlaying = true;
-    }
+                const listItem = document.createElement('li');
+                listItem.classList.add('cart-item');
+                listItem.dataset.audioUrl = audioUrl;
+                listItem.dataset.cartId = cartItemId;
 
-    playPauseBtn.addEventListener('click', () => {
-        if (isPlaying) {
-            audioPlayer.pause();
-        } else {
-            audioPlayer.play();
+                listItem.innerHTML = `
+                    <div class="cart-item-info">
+                        <div class="cart-item-title">${file.name}</div>
+                    </div>
+                    <div class="cart-item-controls">
+                        <button class="play-button" data-cart-id="${cartItemId}">Play</button>
+                        <button class="stop-button" data-cart-id="${cartItemId}" disabled>Stop</button>
+                    </div>
+                `;
+
+                cartList.appendChild(listItem);
+
+                const playButton = listItem.querySelector('.play-button');
+                const stopButton = listItem.querySelector('.stop-button');
+
+                const audioElement = new Audio(audioUrl);
+                audioPlayers[cartItemId] = audioElement;
+
+                playButton.addEventListener('click', () => {
+                    // Stop any other playing audio
+                    for (const id in audioPlayers) {
+                        if (audioPlayers[id] !== audioElement && !audioPlayers[id].paused) {
+                            audioPlayers[id].pause();
+                            const otherPlayButton = document.querySelector(`.play-button[data-cart-id="${id}"]`);
+                            const otherStopButton = document.querySelector(`.stop-button[data-cart-id="${id}"]`);
+                            if (otherPlayButton) otherPlayButton.classList.remove('playing');
+                            if (otherStopButton) otherStopButton.setAttribute('disabled', true);
+                        }
+                    }
+
+                    audioElement.play();
+                    playButton.classList.add('playing');
+                    stopButton.removeAttribute('disabled');
+                });
+
+                stopButton.addEventListener('click', () => {
+                    audioElement.pause();
+                    audioElement.currentTime = 0;
+                    playButton.classList.remove('playing');
+                    stopButton.setAttribute('disabled', true);
+                });
+
+                audioElement.addEventListener('ended', () => {
+                    playButton.classList.remove('playing');
+                    stopButton.setAttribute('disabled', true);
+                    audioElement.currentTime = 0;
+                });
+            };
+
+            reader.onerror = () => {
+                alert(`Error reading file: ${file.name}`);
+            };
+
+            reader.readAsDataURL(file);
         }
-        isPlaying = !isPlaying;
-    });
-
-    audioPlayer.addEventListener('timeupdate', () => {
-        const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-        progressBar.style.width = `${progress}%`;
-        currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
-        durationDisplay.textContent = formatTime(audioPlayer.duration);
-    });
-</script>
+    </script>
 </body>
 </html>
