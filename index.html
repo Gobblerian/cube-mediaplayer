@@ -6,11 +6,12 @@
     <title>Radio Playout System - Beds</title>
     <style>
         :root {
-            --primary: #2c3e50;
-            --secondary: #3498db;
-            --accent: #e74c3c;
-            --light: #ecf0f1;
-            --dark: #2c3e50;
+            --primary: #F39C12;
+            --secondary: #F1C40F;
+            --accent: #E67E22;
+            --light: #FEF9E7;
+            --dark: #7D6608;
+            --text: #34495e;
             --player-height: 120px;
             --border-radius: 6px;
         }
@@ -23,8 +24,8 @@
         }
         
         body {
-            background-color: #f5f7fa;
-            color: var(--dark);
+            background-color: #FFFDF5;
+            color: var(--text);
             display: flex;
             flex-direction: column;
             height: 100vh;
@@ -54,10 +55,30 @@
             overflow: hidden;
         }
         
+        .empty-library {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .empty-library svg {
+            margin-bottom: 1rem;
+            opacity: 0.7;
+        }
+        
+        .empty-library p {
+            margin-bottom: 0.5rem;
+        }
+        
         .library {
             width: 300px;
-            background-color: white;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            background-color: var(--light);
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -65,7 +86,7 @@
         
         .library-header {
             padding: 1rem;
-            background-color: var(--light);
+            background-color: var(--primary);
             border-bottom: 1px solid #ddd;
             display: flex;
             flex-direction: column;
@@ -74,9 +95,11 @@
         
         .search-box {
             width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ddd;
+            padding: 0.75rem;
+            border: none;
             border-radius: var(--border-radius);
+            font-size: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         
         .upload-container {
@@ -91,17 +114,21 @@
             justify-content: center;
             gap: 0.5rem;
             background-color: var(--secondary);
-            color: white;
-            padding: 0.5rem 1rem;
+            color: var(--dark);
+            padding: 0.7rem 1rem;
             border-radius: var(--border-radius);
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 1rem;
+            font-weight: bold;
             transition: all 0.2s;
             width: 100%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         
         .custom-file-upload:hover {
-            background-color: #2980b9;
+            background-color: #F7DC6F;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
         input[type="file"] {
@@ -240,55 +267,59 @@
         .player-controls {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.7rem;
+            margin-top: 0.5rem;
         }
         
         .play-btn, .stop-btn {
             border: none;
-            background-color: var(--primary);
-            color: white;
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         
         .play-btn:hover, .stop-btn:hover {
             transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
         
         .play-btn {
             background-color: var(--secondary);
+            color: var(--dark);
         }
         
         .stop-btn {
             background-color: var(--accent);
+            color: white;
         }
         
         .progress-container {
             flex: 1;
-            height: 6px;
-            background-color: #eee;
-            border-radius: 3px;
+            height: 8px;
+            background-color: #FDEBD0;
+            border-radius: 4px;
             overflow: hidden;
             margin: 0 0.5rem;
         }
         
         .progress-bar {
             height: 100%;
-            background-color: var(--secondary);
+            background-color: var(--accent);
             width: 0;
         }
         
         .duration {
-            font-size: 0.7rem;
+            font-size: 0.8rem;
             color: #666;
             min-width: 45px;
             text-align: right;
+            font-weight: bold;
         }
         
         .player.playing .player-header {
@@ -296,7 +327,7 @@
         }
         
         .player.ready .player-header {
-            background-color: #27ae60;
+            background-color: #D4AC0D;
         }
         
         .history-section {
@@ -369,7 +400,7 @@
 <body>
     <header>
         <div class="logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2"/>
                 <circle cx="12" cy="12" r="4" fill="white"/>
                 <path d="M12 2V6" stroke="white" stroke-width="2"/>
@@ -385,10 +416,9 @@
     <div class="container">
         <div class="library">
             <div class="library-header">
-                <input type="text" class="search-box" placeholder="Search beds...">
                 <div class="upload-container">
                     <label for="file-upload" class="custom-file-upload">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                             <path d="M19 12L12 5L5 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
@@ -396,39 +426,20 @@
                     </label>
                     <input id="file-upload" type="file" accept="audio/*" multiple>
                 </div>
+                <input type="text" class="search-box" placeholder="Search your beds...">
             </div>
             <div class="tracks-container" id="tracks-container">
-                <div class="track" draggable="true" data-id="bed1">
-                    <h3>News Background</h3>
-                    <p>Duration: 0:45 | Mood: Serious</p>
-                </div>
-                <div class="track" draggable="true" data-id="bed2">
-                    <h3>Morning Show Loop</h3>
-                    <p>Duration: 1:30 | Mood: Upbeat</p>
-                </div>
-                <div class="track" draggable="true" data-id="bed3">
-                    <h3>Sports Theme</h3>
-                    <p>Duration: 0:30 | Mood: Energetic</p>
-                </div>
-                <div class="track" draggable="true" data-id="bed4">
-                    <h3>Weather Update</h3>
-                    <p>Duration: 0:20 | Mood: Neutral</p>
-                </div>
-                <div class="track" draggable="true" data-id="bed5">
-                    <h3>Talk Show Ambient</h3>
-                    <p>Duration: 2:00 | Mood: Relaxed</p>
-                </div>
-                <div class="track" draggable="true" data-id="bed6">
-                    <h3>Dramatic Tension</h3>
-                    <p>Duration: 1:15 | Mood: Suspenseful</p>
-                </div>
-                <div class="track" draggable="true" data-id="bed7">
-                    <h3>Tech Segment</h3>
-                    <p>Duration: 0:55 | Mood: Modern</p>
-                </div>
-                <div class="track" draggable="true" data-id="bed8">
-                    <h3>Interview Background</h3>
-                    <p>Duration: 1:45 | Mood: Subtle</p>
+                <!-- No default tracks - users will upload their own -->
+                <div class="empty-library">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" stroke="#F39C12" stroke-width="2"/>
+                        <path d="M12 16V20" stroke="#F39C12" stroke-width="2"/>
+                        <path d="M16 12H20" stroke="#F39C12" stroke-width="2"/>
+                        <path d="M12 8V4" stroke="#F39C12" stroke-width="2"/>
+                        <path d="M8 12H4" stroke="#F39C12" stroke-width="2"/>
+                    </svg>
+                    <p>Your library is empty</p>
+                    <p>Click "Upload Beds" to add tracks</p>
                 </div>
             </div>
         </div>
