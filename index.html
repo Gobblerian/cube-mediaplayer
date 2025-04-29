@@ -3,258 +3,733 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlayIt Cartwall Inspired (Enhanced)</title>
+    <title>Radio Playout System - Beds</title>
     <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --player-height: 120px;
+            --border-radius: 6px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
         body {
-            font-family: sans-serif;
-            background-color: #333;
-            color: #eee;
-            margin: 20px;
+            background-color: #f5f7fa;
+            color: var(--dark);
             display: flex;
             flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
         }
-
-        .cartwall {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 10px;
-            width: 90%;
-            max-width: 960px;
-            padding: 10px;
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-
-        .cart-container {
-            aspect-ratio: 1 / 1; /* Make containers square */
-            position: relative; /* For absolute positioning of content */
+        
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
         }
-
-        .cart {
-            position: absolute;
-            top: 0;
-            left: 0;
+        
+        .library {
+            width: 300px;
+            background-color: white;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .library-header {
+            padding: 1rem;
+            background-color: var(--light);
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .search-box {
             width: 100%;
-            height: 100%;
-            background-color: #555;
-            border: 1px solid #777;
-            border-radius: 5px;
-            padding: 10px;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+        }
+        
+        .tracks-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+        
+        .track {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: grab;
+            transition: all 0.2s;
+        }
+        
+        .track:hover {
+            background-color: var(--light);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .track h3 {
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .track p {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .players-section {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: center; /* Center content vertically */
-            align-items: center; /* Center content horizontally */
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            overflow: hidden;
-            text-align: center;
-            font-size: 1em; /* Base font size */
-            line-height: 1.2;
+            padding: 1rem;
+            background-color: #f5f7fa;
+            overflow: auto;
         }
-
-        .cart:hover {
-            background-color: #666;
-        }
-
-        .cart.playing {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .cart-title {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-bottom: 5px;
-        }
-
-        .cart-time-remaining {
-            font-size: 0.8em;
-            opacity: 0.8;
-        }
-
-        .upload-section {
-            margin-bottom: 20px;
+        
+        .players-container {
             display: flex;
-            gap: 10px;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .player {
+            flex: 1;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: var(--player-height);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .player-header {
+            background-color: var(--secondary);
+            color: white;
+            padding: 0.5rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
         }
-
-        #audio-upload {
-            flex-grow: 1;
-            padding: 8px;
-            border: 1px solid #777;
-            border-radius: 4px;
-            background-color: #444;
-            color: #eee;
-        }
-
-        #upload-button {
-            padding: 8px 12px;
-            background-color: #5cb85c;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        #upload-button:hover {
-            background-color: #4cae4c;
-        }
-
-        .color-picker-container {
+        
+        .player-number {
+            background-color: var(--primary);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
             display: flex;
-            gap: 5px;
-            margin-top: 5px;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+        
+        .player-shortcut {
+            font-size: 0.7rem;
+            background-color: rgba(0,0,0,0.2);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+        }
+        
+        .player-content {
+            flex: 1;
+            padding: 0.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .player-empty {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-style: italic;
+            font-size: 0.9rem;
+            background-color: #f9f9f9;
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            margin: 0.25rem;
+        }
+        
+        .player-track-info {
+            flex: 1;
+            display: none;
+        }
+        
+        .player-track-info.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .player-title {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        
+        .player-artist {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .play-btn, .stop-btn {
+            border: none;
+            background-color: var(--primary);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .play-btn:hover, .stop-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .play-btn {
+            background-color: var(--secondary);
+        }
+        
+        .stop-btn {
+            background-color: var(--accent);
+        }
+        
+        .progress-container {
+            flex: 1;
+            height: 6px;
+            background-color: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 0 0.5rem;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--secondary);
+            width: 0;
+        }
+        
+        .duration {
+            font-size: 0.7rem;
+            color: #666;
+            min-width: 45px;
+            text-align: right;
+        }
+        
+        .player.playing .player-header {
+            background-color: var(--accent);
+        }
+        
+        .player.ready .player-header {
+            background-color: #27ae60;
+        }
+        
+        .history-section {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .history-table th, .history-table td {
+            padding: 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .history-table th {
+            background-color: var(--light);
+            font-weight: normal;
+            color: #666;
+            font-size: 0.8rem;
+        }
+        
+        footer {
+            background-color: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+        
+        .drag-over {
+            border: 2px dashed var(--secondary) !important;
+            background-color: rgba(52, 152, 219, 0.1) !important;
         }
 
-        .color-option {
-            width: 20px;
-            height: 20px;
-            border-radius: 3px;
-            cursor: pointer;
-            border: 1px solid #ccc;
+        /* Responsive design */
+        @media (max-width: 1200px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .library {
+                width: 100%;
+                height: 200px;
+            }
+            
+            .players-container {
+                flex-direction: column;
+            }
+            
+            .player {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="upload-section">
-        <input type="file" id="audio-upload" accept="audio/*" multiple>
-        <button id="upload-button">Add Carts</button>
-    </div>
-
-    <div class="cartwall" id="cartwall">
+    <header>
+        <div class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2"/>
+                <circle cx="12" cy="12" r="4" fill="white"/>
+                <path d="M12 2V6" stroke="white" stroke-width="2"/>
+                <path d="M12 18V22" stroke="white" stroke-width="2"/>
+                <path d="M2 12H6" stroke="white" stroke-width="2"/>
+                <path d="M18 12H22" stroke="white" stroke-width="2"/>
+            </svg>
+            Radio Playout System
         </div>
+        <div>Beds Module</div>
+    </header>
+    
+    <div class="container">
+        <div class="library">
+            <div class="library-header">
+                <input type="text" class="search-box" placeholder="Search beds...">
+            </div>
+            <div class="tracks-container">
+                <div class="track" draggable="true" data-id="bed1">
+                    <h3>News Background</h3>
+                    <p>Duration: 0:45 | Mood: Serious</p>
+                </div>
+                <div class="track" draggable="true" data-id="bed2">
+                    <h3>Morning Show Loop</h3>
+                    <p>Duration: 1:30 | Mood: Upbeat</p>
+                </div>
+                <div class="track" draggable="true" data-id="bed3">
+                    <h3>Sports Theme</h3>
+                    <p>Duration: 0:30 | Mood: Energetic</p>
+                </div>
+                <div class="track" draggable="true" data-id="bed4">
+                    <h3>Weather Update</h3>
+                    <p>Duration: 0:20 | Mood: Neutral</p>
+                </div>
+                <div class="track" draggable="true" data-id="bed5">
+                    <h3>Talk Show Ambient</h3>
+                    <p>Duration: 2:00 | Mood: Relaxed</p>
+                </div>
+                <div class="track" draggable="true" data-id="bed6">
+                    <h3>Dramatic Tension</h3>
+                    <p>Duration: 1:15 | Mood: Suspenseful</p>
+                </div>
+                <div class="track" draggable="true" data-id="bed7">
+                    <h3>Tech Segment</h3>
+                    <p>Duration: 0:55 | Mood: Modern</p>
+                </div>
+                <div class="track" draggable="true" data-id="bed8">
+                    <h3>Interview Background</h3>
+                    <p>Duration: 1:45 | Mood: Subtle</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="players-section">
+            <div class="players-container">
+                <div class="player" id="player1" data-key="7">
+                    <div class="player-header">
+                        <div class="player-number">1</div>
+                        <div>Bed Player 1</div>
+                        <div class="player-shortcut">NUM 7</div>
+                    </div>
+                    <div class="player-content">
+                        <div class="player-empty">Drag and drop a bed here</div>
+                        <div class="player-track-info">
+                            <div class="player-title">Track Title</div>
+                            <div class="player-artist">Duration: 0:00</div>
+                            <div class="player-controls">
+                                <button class="play-btn">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M5 3L19 12L5 21V3Z" fill="white"/>
+                                    </svg>
+                                </button>
+                                <button class="stop-btn">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="5" y="5" width="14" height="14" fill="white"/>
+                                    </svg>
+                                </button>
+                                <div class="progress-container">
+                                    <div class="progress-bar"></div>
+                                </div>
+                                <div class="duration">0:00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="player" id="player2" data-key="8">
+                    <div class="player-header">
+                        <div class="player-number">2</div>
+                        <div>Bed Player 2</div>
+                        <div class="player-shortcut">NUM 8</div>
+                    </div>
+                    <div class="player-content">
+                        <div class="player-empty">Drag and drop a bed here</div>
+                        <div class="player-track-info">
+                            <div class="player-title">Track Title</div>
+                            <div class="player-artist">Duration: 0:00</div>
+                            <div class="player-controls">
+                                <button class="play-btn">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M5 3L19 12L5 21V3Z" fill="white"/>
+                                    </svg>
+                                </button>
+                                <button class="stop-btn">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="5" y="5" width="14" height="14" fill="white"/>
+                                    </svg>
+                                </button>
+                                <div class="progress-container">
+                                    <div class="progress-bar"></div>
+                                </div>
+                                <div class="duration">0:00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="player" id="player3" data-key="9">
+                    <div class="player-header">
+                        <div class="player-number">3</div>
+                        <div>Bed Player 3</div>
+                        <div class="player-shortcut">NUM 9</div>
+                    </div>
+                    <div class="player-content">
+                        <div class="player-empty">Drag and drop a bed here</div>
+                        <div class="player-track-info">
+                            <div class="player-title">Track Title</div>
+                            <div class="player-artist">Duration: 0:00</div>
+                            <div class="player-controls">
+                                <button class="play-btn">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M5 3L19 12L5 21V3Z" fill="white"/>
+                                    </svg>
+                                </button>
+                                <button class="stop-btn">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="5" y="5" width="14" height="14" fill="white"/>
+                                    </svg>
+                                </button>
+                                <div class="progress-container">
+                                    <div class="progress-bar"></div>
+                                </div>
+                                <div class="duration">0:00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="history-section">
+                <div class="history-header">
+                    <h2>Play History</h2>
+                </div>
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Bed Name</th>
+                            <th>Duration</th>
+                            <th>Player</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body">
+                        <!-- History entries will be added here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        Radio Playout System v1.0 - Beds Module
+    </footer>
 
     <script>
-        const audioUpload = document.getElementById('audio-upload');
-        const uploadButton = document.getElementById('upload-button');
-        const cartwall = document.getElementById('cartwall');
-        const audioPlayers = {};
-        let currentlyPlaying = null;
-
-        const availableColors = ['#555', '#a00', '#0a0', '#00a', '#a0a', '#0aa', '#aaa']; // Default colors
-
-        uploadButton.addEventListener('click', () => {
-            audioUpload.click();
-        });
-
-        audioUpload.addEventListener('change', (event) => {
-            const files = event.target.files;
-            if (files) {
-                for (const file of files) {
-                    addAudioToCartwall(file);
-                }
-                audioUpload.value = '';
+        document.addEventListener('DOMContentLoaded', function() {
+            // Track data simulation - in a real app, this would come from a database or API
+            const tracksData = {
+                "bed1": { title: "News Background", duration: 45, mood: "Serious" },
+                "bed2": { title: "Morning Show Loop", duration: 90, mood: "Upbeat" },
+                "bed3": { title: "Sports Theme", duration: 30, mood: "Energetic" },
+                "bed4": { title: "Weather Update", duration: 20, mood: "Neutral" },
+                "bed5": { title: "Talk Show Ambient", duration: 120, mood: "Relaxed" },
+                "bed6": { title: "Dramatic Tension", duration: 75, mood: "Suspenseful" },
+                "bed7": { title: "Tech Segment", duration: 55, mood: "Modern" },
+                "bed8": { title: "Interview Background", duration: 105, mood: "Subtle" }
+            };
+            
+            // Initialize variables
+            const players = document.querySelectorAll('.player');
+            const tracks = document.querySelectorAll('.track');
+            let activePlayers = [];
+            
+            // Helper function to format time
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
             }
-        });
-
-        function addAudioToCartwall(file) {
-            const reader = new FileReader();
-
-            reader.onload = (e) => {
-                const audioUrl = e.target.result;
-                const cartId = `cart-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-                const defaultColor = availableColors[0];
-
-                const cartContainer = document.createElement('div');
-                cartContainer.classList.add('cart-container');
-
-                const cart = document.createElement('div');
-                cart.classList.add('cart');
-                cart.dataset.audioUrl = audioUrl;
-                cart.dataset.cartId = cartId;
-                cart.style.backgroundColor = defaultColor;
-                cart.innerHTML = `
-                    <div class="cart-title">${file.name}</div>
-                    <div class="cart-time-remaining">--:--</div>
+            
+            // Drag and drop functionality
+            tracks.forEach(track => {
+                track.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', track.dataset.id);
+                });
+            });
+            
+            players.forEach(player => {
+                // Add drag and drop event listeners
+                player.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    player.querySelector('.player-empty').classList.add('drag-over');
+                });
+                
+                player.addEventListener('dragleave', function() {
+                    player.querySelector('.player-empty').classList.remove('drag-over');
+                });
+                
+                player.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    player.querySelector('.player-empty').classList.remove('drag-over');
+                    
+                    const trackId = e.dataTransfer.getData('text/plain');
+                    loadTrackToPlayer(player, trackId);
+                });
+                
+                // Add click event listeners for controls
+                const playBtn = player.querySelector('.play-btn');
+                const stopBtn = player.querySelector('.stop-btn');
+                
+                playBtn.addEventListener('click', function() {
+                    playTrack(player);
+                });
+                
+                stopBtn.addEventListener('click', function() {
+                    stopTrack(player);
+                });
+            });
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Check if it's a numpad key
+                if (e.key === '7' || e.key === 'Numpad7') {
+                    triggerPlayer('player1');
+                } else if (e.key === '8' || e.key === 'Numpad8') {
+                    triggerPlayer('player2');
+                } else if (e.key === '9' || e.key === 'Numpad9') {
+                    triggerPlayer('player3');
+                }
+            });
+            
+            // Function to trigger player (play if not playing, stop if playing)
+            function triggerPlayer(playerId) {
+                const player = document.getElementById(playerId);
+                if (player.classList.contains('playing')) {
+                    stopTrack(player);
+                } else if (player.classList.contains('ready')) {
+                    playTrack(player);
+                }
+            }
+            
+            // Function to load a track to a player
+            function loadTrackToPlayer(player, trackId) {
+                const trackData = tracksData[trackId];
+                if (!trackData) return;
+                
+                // Display track info
+                player.querySelector('.player-empty').style.display = 'none';
+                const trackInfo = player.querySelector('.player-track-info');
+                trackInfo.classList.add('active');
+                
+                trackInfo.querySelector('.player-title').textContent = trackData.title;
+                trackInfo.querySelector('.player-artist').textContent = `Duration: ${formatTime(trackData.duration)} | Mood: ${trackData.mood}`;
+                trackInfo.querySelector('.duration').textContent = formatTime(trackData.duration);
+                
+                // Store track data in player
+                player.dataset.trackId = trackId;
+                player.dataset.duration = trackData.duration;
+                
+                // Reset progress bar
+                const progressBar = player.querySelector('.progress-bar');
+                progressBar.style.width = '0%';
+                
+                // Mark player as ready
+                player.classList.add('ready');
+                player.classList.remove('playing');
+            }
+            
+            // Function to play a track
+            function playTrack(player) {
+                if (!player.classList.contains('ready')) return;
+                
+                // Stop any currently playing track in this player
+                if (player.classList.contains('playing')) {
+                    stopTrack(player);
+                }
+                
+                // Mark as playing
+                player.classList.add('playing');
+                
+                // Get track info
+                const trackId = player.dataset.trackId;
+                const duration = parseInt(player.dataset.duration);
+                const progressBar = player.querySelector('.progress-bar');
+                const durationDisplay = player.querySelector('.duration');
+                
+                // Add to play history
+                addToHistory(trackId, player.id);
+                
+                // Simulate playback
+                let elapsed = 0;
+                player.playInterval = setInterval(() => {
+                    elapsed++;
+                    const percent = (elapsed / duration) * 100;
+                    progressBar.style.width = `${percent}%`;
+                    durationDisplay.textContent = formatTime(duration - elapsed);
+                    
+                    if (elapsed >= duration) {
+                        stopTrack(player);
+                    }
+                }, 1000);
+                
+                // Add to active players
+                activePlayers.push(player);
+            }
+            
+            // Function to stop a track
+            function stopTrack(player) {
+                // Clear the playback interval
+                clearInterval(player.playInterval);
+                
+                // Reset UI
+                player.classList.remove('playing');
+                const progressBar = player.querySelector('.progress-bar');
+                progressBar.style.width = '0%';
+                
+                const trackId = player.dataset.trackId;
+                const trackData = tracksData[trackId];
+                if (trackData) {
+                    player.querySelector('.duration').textContent = formatTime(trackData.duration);
+                }
+                
+                // Remove from active players
+                activePlayers = activePlayers.filter(p => p !== player);
+            }
+            
+            // Function to add playback to history
+            function addToHistory(trackId, playerId) {
+                const trackData = tracksData[trackId];
+                if (!trackData) return;
+                
+                const historyBody = document.getElementById('history-body');
+                const row = document.createElement('tr');
+                
+                const now = new Date();
+                const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                
+                row.innerHTML = `
+                    <td>${timeStr}</td>
+                    <td>${trackData.title}</td>
+                    <td>${formatTime(trackData.duration)}</td>
+                    <td>Player ${playerId.replace('player', '')}</td>
                 `;
-                cartContainer.appendChild(cart);
-                cartwall.appendChild(cartContainer);
-
-                const timeRemainingDisplay = cart.querySelector('.cart-time-remaining');
-                const audioElement = new Audio(audioUrl);
-                audioPlayers[cartId] = audioElement;
-
-                // Function to update time remaining
-                const updateTimeRemaining = () => {
-                    if (audioPlayers[cartId] && !audioPlayers[cartId].paused) {
-                        const duration = isNaN(audioPlayers[cartId].duration) ? 0 : audioPlayers[cartId].duration;
-                        const currentTime = audioPlayers[cartId].currentTime;
-                        const remaining = Math.max(0, duration - currentTime);
-                        const minutes = Math.floor(remaining / 60).toString().padStart(2, '0');
-                        const seconds = Math.floor(remaining % 60).toString().padStart(2, '0');
-                        timeRemainingDisplay.textContent = `-${minutes}:${seconds}`;
-                    } else if (timeRemainingDisplay.textContent !== '--:--') {
-                        timeRemainingDisplay.textContent = '--:--';
-                    }
-                };
-
-                audioElement.addEventListener('timeupdate', updateTimeRemaining);
-
-                cart.addEventListener('click', () => {
-                    if (currentlyPlaying === cartId) {
-                        audioPlayers[currentlyPlaying].pause();
-                        const playingCart = document.querySelector(`.cart[data-cart-id="${currentlyPlaying}"]`);
-                        if (playingCart) {
-                            playingCart.classList.remove('playing');
-                        }
-                        currentlyPlaying = null;
+                
+                historyBody.prepend(row);
+                
+                // Limit history to 10 entries
+                const rows = historyBody.querySelectorAll('tr');
+                if (rows.length > 10) {
+                    historyBody.removeChild(rows[rows.length - 1]);
+                }
+            }
+            
+            // Search functionality
+            const searchBox = document.querySelector('.search-box');
+            searchBox.addEventListener('input', function() {
+                const searchTerm = searchBox.value.toLowerCase();
+                
+                tracks.forEach(track => {
+                    const trackId = track.dataset.id;
+                    const trackData = tracksData[trackId];
+                    const trackTitle = trackData.title.toLowerCase();
+                    const trackMood = trackData.mood.toLowerCase();
+                    
+                    if (trackTitle.includes(searchTerm) || trackMood.includes(searchTerm)) {
+                        track.style.display = 'block';
                     } else {
-                        if (currentlyPlaying) {
-                            audioPlayers[currentlyPlaying].pause();
-                            const playingCart = document.querySelector(`.cart[data-cart-id="${currentlyPlaying}"]`);
-                            if (playingCart) {
-                                playingCart.classList.remove('playing');
-                            }
-                        }
-                        audioElement.play();
-                        cart.classList.add('playing');
-                        currentlyPlaying = cartId;
-                        updateTimeRemaining(); // Initial update when playing
+                        track.style.display = 'none';
                     }
                 });
-
-                audioElement.addEventListener('ended', () => {
-                    cart.classList.remove('playing');
-                    currentlyPlaying = null;
-                    audioElement.currentTime = 0;
-                    timeRemainingDisplay.textContent = '--:--';
-                });
-
-                // Add color picker for this cart
-                const colorPickerContainer = document.createElement('div');
-                colorPickerContainer.classList.add('color-picker-container');
-                availableColors.forEach(color => {
-                    const colorOption = document.createElement('div');
-                    colorOption.classList.add('color-option');
-                    colorOption.style.backgroundColor = color;
-                    colorOption.addEventListener('click', () => {
-                        cart.style.backgroundColor = color;
-                    });
-                    colorPickerContainer.appendChild(colorOption);
-                });
-                cartContainer.appendChild(colorPickerContainer);
-
-                // Adjust text size based on content length (basic approach)
-                const adjustTextSize = () => {
-                    const titleLength = file.name.length;
-                    if (titleLength > 15) {
-                        cart.style.fontSize = '0.8em';
-                    } else if (titleLength > 20) {
-                        cart.style.fontSize = '0.7em';
-                    } else {
-                        cart.style.fontSize = '1em'; // Reset to default
-                    }
-                };
-                adjustTextSize();
-            };
-
-            reader.onerror = () => {
-                alert(`Error reading file: ${file.name}`);
-            };
-
-            reader.readAsDataURL(file);
-        }
+            });
+        });
     </script>
 </body>
 </html>
