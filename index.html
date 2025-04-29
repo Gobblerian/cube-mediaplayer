@@ -67,6 +67,9 @@
             padding: 1rem;
             background-color: var(--light);
             border-bottom: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
         
         .search-box {
@@ -74,6 +77,35 @@
             padding: 0.5rem;
             border: 1px solid #ddd;
             border-radius: var(--border-radius);
+        }
+        
+        .upload-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .custom-file-upload {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background-color: var(--secondary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        
+        .custom-file-upload:hover {
+            background-color: #2980b9;
+        }
+        
+        input[type="file"] {
+            display: none;
         }
         
         .tracks-container {
@@ -354,8 +386,18 @@
         <div class="library">
             <div class="library-header">
                 <input type="text" class="search-box" placeholder="Search beds...">
+                <div class="upload-container">
+                    <label for="file-upload" class="custom-file-upload">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M19 12L12 5L5 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Upload Beds
+                    </label>
+                    <input id="file-upload" type="file" accept="audio/*" multiple>
+                </div>
             </div>
-            <div class="tracks-container">
+            <div class="tracks-container" id="tracks-container">
                 <div class="track" draggable="true" data-id="bed1">
                     <h3>News Background</h3>
                     <p>Duration: 0:45 | Mood: Serious</p>
@@ -530,6 +572,8 @@
             const players = document.querySelectorAll('.player');
             const tracks = document.querySelectorAll('.track');
             let activePlayers = [];
+            let audioContext = null;
+            let audioElements = {};
             
             // Helper function to format time
             function formatTime(seconds) {
@@ -538,10 +582,84 @@
                 return `${mins}:${secs.toString().padStart(2, '0')}`;
             }
             
+            // Initialize audio context on user interaction
+            function initAudioContext() {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            
+            // Add event listener to all players for initializing audio context
+            document.addEventListener('click', initAudioContext, { once: true });
+            
+            // Setup file upload functionality
+            const fileUpload = document.getElementById('file-upload');
+            fileUpload.addEventListener('change', handleFileUpload);
+            
+            function handleFileUpload(e) {
+                initAudioContext();
+                const files = e.target.files;
+                if (!files || files.length === 0) return;
+                
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    if (!file.type.startsWith('audio/')) continue;
+                    
+                    // Create unique ID for the track
+                    const trackId = 'track_' + Date.now() + '_' + i;
+                    
+                    // Create audio element for the file
+                    const audio = new Audio();
+                    audio.src = URL.createObjectURL(file);
+                    
+                    // Add to audio elements collection
+                    audioElements[trackId] = {
+                        audio: audio,
+                        file: file
+                    };
+                    
+                    // When metadata is loaded, create track element
+                    audio.addEventListener('loadedmetadata', function() {
+                        const duration = Math.round(audio.duration);
+                        
+                        // Store track data
+                        tracksData[trackId] = {
+                            title: file.name.replace(/\.[^/.]+$/, ""),
+                            duration: duration,
+                            mood: "Custom"
+                        };
+                        
+                        // Create track element
+                        const trackElement = document.createElement('div');
+                        trackElement.className = 'track';
+                        trackElement.draggable = true;
+                        trackElement.dataset.id = trackId;
+                        
+                        trackElement.innerHTML = `
+                            <h3>${file.name.replace(/\.[^/.]+$/, "")}</h3>
+                            <p>Duration: ${formatTime(duration)} | Custom Upload</p>
+                        `;
+                        
+                        // Add event listeners
+                        trackElement.addEventListener('dragstart', function(e) {
+                            e.dataTransfer.setData('text/plain', trackId);
+                            e.dataTransfer.setData('target-player', ''); // Will be set if dragging directly to a player
+                        });
+                        
+                        // Add to tracks container
+                        document.getElementById('tracks-container').prepend(trackElement);
+                    });
+                }
+                
+                // Reset file input
+                fileUpload.value = '';
+            }
+            
             // Drag and drop functionality
             tracks.forEach(track => {
                 track.addEventListener('dragstart', function(e) {
                     e.dataTransfer.setData('text/plain', track.dataset.id);
+                    e.dataTransfer.setData('target-player', ''); // Will be set if dragging directly to a player
                 });
             });
             
@@ -549,16 +667,31 @@
                 // Add drag and drop event listeners
                 player.addEventListener('dragover', function(e) {
                     e.preventDefault();
-                    player.querySelector('.player-empty').classList.add('drag-over');
+                    // Highlight the whole player when dragging over
+                    player.classList.add('drag-over');
+                    const playerEmpty = player.querySelector('.player-empty');
+                    if (playerEmpty) {
+                        playerEmpty.classList.add('drag-over');
+                    }
                 });
                 
                 player.addEventListener('dragleave', function() {
-                    player.querySelector('.player-empty').classList.remove('drag-over');
+                    // Remove highlight
+                    player.classList.remove('drag-over');
+                    const playerEmpty = player.querySelector('.player-empty');
+                    if (playerEmpty) {
+                        playerEmpty.classList.remove('drag-over');
+                    }
                 });
                 
                 player.addEventListener('drop', function(e) {
                     e.preventDefault();
-                    player.querySelector('.player-empty').classList.remove('drag-over');
+                    // Remove highlight
+                    player.classList.remove('drag-over');
+                    const playerEmpty = player.querySelector('.player-empty');
+                    if (playerEmpty) {
+                        playerEmpty.classList.remove('drag-over');
+                    }
                     
                     const trackId = e.dataTransfer.getData('text/plain');
                     loadTrackToPlayer(player, trackId);
@@ -621,6 +754,18 @@
                 const progressBar = player.querySelector('.progress-bar');
                 progressBar.style.width = '0%';
                 
+                // If it's an uploaded audio file, prepare the audio element
+                if (audioElements[trackId]) {
+                    // If the player already has an audio element, reset it
+                    if (player.audioElement) {
+                        player.audioElement.pause();
+                        player.audioElement.currentTime = 0;
+                    }
+                    
+                    // Assign audio element to player
+                    player.audioElement = audioElements[trackId].audio;
+                }
+                
                 // Mark player as ready
                 player.classList.add('ready');
                 player.classList.remove('playing');
@@ -647,18 +792,42 @@
                 // Add to play history
                 addToHistory(trackId, player.id);
                 
-                // Simulate playback
-                let elapsed = 0;
-                player.playInterval = setInterval(() => {
-                    elapsed++;
-                    const percent = (elapsed / duration) * 100;
-                    progressBar.style.width = `${percent}%`;
-                    durationDisplay.textContent = formatTime(duration - elapsed);
+                // If it's an uploaded audio file, play it
+                if (player.audioElement) {
+                    // Reset and play the audio
+                    player.audioElement.currentTime = 0;
+                    player.audioElement.play();
                     
-                    if (elapsed >= duration) {
+                    // Update progress in real-time
+                    player.audioUpdateInterval = setInterval(() => {
+                        const elapsed = player.audioElement.currentTime;
+                        const percent = (elapsed / duration) * 100;
+                        progressBar.style.width = `${percent}%`;
+                        durationDisplay.textContent = formatTime(duration - Math.floor(elapsed));
+                        
+                        if (elapsed >= duration) {
+                            stopTrack(player);
+                        }
+                    }, 100);
+                    
+                    // Add ended event listener
+                    player.audioElement.addEventListener('ended', function() {
                         stopTrack(player);
-                    }
-                }, 1000);
+                    });
+                } else {
+                    // For sample tracks, simulate playback
+                    let elapsed = 0;
+                    player.playInterval = setInterval(() => {
+                        elapsed++;
+                        const percent = (elapsed / duration) * 100;
+                        progressBar.style.width = `${percent}%`;
+                        durationDisplay.textContent = formatTime(duration - elapsed);
+                        
+                        if (elapsed >= duration) {
+                            stopTrack(player);
+                        }
+                    }, 1000);
+                }
                 
                 // Add to active players
                 activePlayers.push(player);
@@ -668,6 +837,13 @@
             function stopTrack(player) {
                 // Clear the playback interval
                 clearInterval(player.playInterval);
+                clearInterval(player.audioUpdateInterval);
+                
+                // If it's an uploaded audio file, pause it
+                if (player.audioElement) {
+                    player.audioElement.pause();
+                    player.audioElement.currentTime = 0;
+                }
                 
                 // Reset UI
                 player.classList.remove('playing');
